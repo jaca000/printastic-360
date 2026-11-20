@@ -58,10 +58,15 @@
   .late { color:#ff9f9e; font-weight:700 }
   @media(max-width:720px) { .metrics { grid-template-columns:repeat(2,minmax(0,1fr)) } .columns { grid-template-columns:1fr } .top { flex-wrap:wrap } .hero { border-radius:18px; grid-template-columns:1fr } .hero-logo { margin:0; max-width:138px; grid-row:1 } }
 </style>
+<link rel="stylesheet" href="./identidade.css">
 <div class="shell">
 <header class="top">
-  <div class="brand">Printastic 360</div>
-  <nav aria-label="Produção"><a href="#planning">Planeamento</a><a href="./oportunidades.html">Oportunidades de venda</a><a href="#connection">Ligação à API</a></nav>
+  <a class="brand" href="./">Printastic<span>360</span></a>
+  <nav class="nav-tabs" aria-label="Menu principal">
+    <a class="active" aria-current="page" href="./"><span aria-hidden="true">▦</span> Produção</a>
+    <a href="./oportunidades.html"><span aria-hidden="true">↗</span> Oportunidades</a>
+    <a href="./mockup.html"><span aria-hidden="true">✦</span> Estúdio de mockups</a>
+  </nav>
 </header>
 <div class="hero">
   <div><h1>Gestão de produção</h1>
@@ -69,8 +74,14 @@
   <img class="hero-logo" src="./logo-printastic-al.png" alt="Printastic_Al — Se imaginas, criamos!">
 </div>
 <section id="pilot" class="session">
-  <p>No modo navegador, os registos ficam neste perfil do Chrome.</p>
-  <div class="buttons"><button id="local">Começar neste navegador</button> <button id="backup" hidden>Descarregar cópia</button></div>
+  <div><h2>Acesso à produção</h2><p>Os registos de produção ficam cifrados neste navegador.</p></div>
+  <form id="local-login" class="unlock">
+    <label>Utilizador<input name="username" autocomplete="username" value="josealmanso" readonly></label>
+    <label>Palavra-passe local<input type="password" name="password" required minlength="12" autocomplete="current-password"></label>
+    <label id="confirm-wrap">Confirmar palavra-passe<input type="password" name="confirmPassword" minlength="12" autocomplete="new-password"></label>
+    <button id="local" type="submit">Desbloquear</button>
+  </form>
+  <div class="buttons"><button id="backup" hidden>Descarregar cópia</button><button id="lock" hidden>Bloquear</button></div>
 </section>
 <details id="connection">
   <summary>Ligação à API</summary>
@@ -122,5 +133,5 @@
   <section><h2>Catálogo</h2><div id="catalog"></div></section>
 </main>
 </div>
-<script type="module" src="./printastic360.mjs?v=mockup1"></script>
+<script type="module" src="./producao.mjs"></script>
 </html>
