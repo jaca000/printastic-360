@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mockups | Printastic 360</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b1220;color:#f4f6ff;font:15px system-ui,sans-serif}main{max-width:1300px;margin:auto;padding:24px}a{color:#a7e4d8}h1{font-size:clamp(35px,6vw,68px);margin:16px 0;letter-spacing:-.055em}p{color:#bec9e3}.grid{display:grid;grid-template-columns:minmax(270px,365px) minmax(0,1fr);gap:22px;align-items:start}section,aside{padding:20px;border:1px solid #394867;border-radius:18px;background:#131d31}form{display:grid;gap:12px}label{display:grid;gap:5px;color:#cad6ed;font-weight:600}fieldset{border:1px solid #394867;border-radius:12px;padding:12px;margin:0}fieldset label{grid-template-columns:95px 1fr;align-items:center;font-size:13px}input,textarea,select,button{min-width:0;font:inherit}input:not([type=range]),textarea,select{width:100%;padding:8px;color:white;background:#101a2e;border:1px solid #556784;border-radius:7px}input[type=range]{width:100%;accent-color:#a0e3d2}button{background:#a0e3d2;color:#111e25;border:none;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:700}button:disabled{opacity:.5;cursor:default}canvas{width:min(100%,650px);height:auto;display:block;margin:auto;border-radius:12px}#message{min-height:1.4em;margin:.5em 0;font-size:13px}@media(max-width:740px){.grid{grid-template-columns:1fr}main{padding:16px}}
+</style></head><body><main>
+<a href="./">Printastic 360</a>
+<h1>Estúdio de mockups</h1>
+<div class="grid">
+<aside><form id="controls">
+<label>Fotografia do produto base<input name="photo" type="file" accept="image/png,image/jpeg,image/webp"></label>
+<label>Arte da personalização<input name="art" type="file" accept="image/png,image/webp"><small>Usa uma imagem com fundo transparente para deixar o material visível.</small></label>
+<fieldset><legend>Aplicação no produto</legend>
+<label>Superfície<select name="surface"><option value="flat">Plana</option><option value="curve">Curva · caneca ou garrafa</option></select></label>
+<label>Horizontal<input name="x" type="range" min="0" max="100" value="50"></label>
+<label>Vertical<input name="y" type="range" min="0" max="100" value="46"></label>
+<label>Largura<input name="size" type="range" min="5" max="95" value="32"></label>
+<label>Rotação<input name="angle" type="range" min="-45" max="45" value="0"></label>
+</fieldset>
+<label>Formato<select name="format"><option value="1350">Feed vertical · 1080 × 1350</option><option value="1080">Feed quadrado · 1080 × 1080</option><option value="1920">Stories · 1080 × 1920</option></select></label>
+<label>Título<input name="title" maxlength="70"></label>
+<label>Texto na imagem<input name="subtitle" maxlength="80" value="Personalizado à tua medida"></label>
+<label>Legenda para Facebook e Instagram<textarea name="caption" rows="4" maxlength="2200"></textarea></label>
+<button type="button" id="copy">Copiar legenda</button>
+<button type="button" id="download" disabled>Descarregar PNG</button>
+</form><p id="message" role="status"></p></aside>
+<section aria-label="Pré-visualização do anúncio"><canvas id="preview" width="1080" height="1350">Pré-visualização do anúncio.</canvas></section>
+</div></main><script type="module" src="./mockup.mjs"></script></body></html>

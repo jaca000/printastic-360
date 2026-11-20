@@ -181,7 +181,11 @@ function start() {
       const card = node('article', '')
       card.append(node('strong', product.name + ' · ' + product.sku),
         node('p', product.supplier + ' · ' + money.format(Number(product.cost)) + ' por unidade · ' +
-          product.stock + ' em stock'), button('Editar ficha', () => edit('product', product)))
+          product.stock + ' em stock'), button('Editar ficha', () => edit('product', product)), ' ',
+        button('Criar publicidade', () => {
+          sessionStorage.setItem('printastic360-mockup-product', product.name)
+          location.assign('./mockup.html')
+        }))
       return card
     })
   }
