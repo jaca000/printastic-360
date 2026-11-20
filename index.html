@@ -62,6 +62,9 @@
   .sales-line button { background:#edf4ff; color:#0755ba }
   #payment-dialog { border:1px solid #d5e3f2; border-radius:16px; background:white; color:#182747; padding:24px }
   #payment-dialog::backdrop { background:#142c5c66 }
+  .product-photo { width:92px; aspect-ratio:1; object-fit:cover; border-radius:12px; display:block; margin-bottom:12px }
+  #report-list article { margin-top:8px }
+  #report-metrics { margin-top:16px }
   #sales-total { align-self:center }
   #sales-list article button { margin:4px 8px 0 0 }
   #app-menu { flex-wrap:wrap }
@@ -75,6 +78,8 @@
     <a class="active" aria-current="page" href="#producao" data-view="production"><span aria-hidden="true">▦</span> Produção</a>
     <a href="#encomendas" data-view="orders">Encomendas</a>
     <a href="#orcamentos" data-view="quotes">Orçamentos</a>
+    <a href="#clientes" data-view="clients">Clientes</a>
+    <a href="#relatorios" data-view="reports">Relatórios</a>
     <a href="#produtos" data-view="products">Produtos</a>
     <a href="#oportunidades" data-view="opportunities"><span aria-hidden="true">↗</span> Oportunidades</a>
     <a href="#estudio" data-view="studio"><span aria-hidden="true">✦</span> Estúdio de mockups</a>
@@ -120,10 +125,38 @@
         <label>Link do produto<input name="url" type="url" required maxlength="2048"></label>
         <label>Custo unitário (€)<input name="cost" inputmode="decimal" required></label>
         <label>Stock disponível<input name="stock" type="number" min="0" max="1000000" value="0" required></label>
-        <label>Preço de venda sugerido (€)<input name="sell" inputmode="decimal"></label><button>Guardar produto</button>
+        <label>Preço de venda sugerido (€)<input name="sell" inputmode="decimal"></label><label>Fotografia do produto<input id="product-photo" type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <button>Guardar produto</button>
       </form>
     </details>
   <div id="catalog"></div></section>
+</div>
+<div id="clients-area" hidden>
+  <section>
+    <h2>Clientes</h2>
+    <form id="client-form">
+      <input type="hidden" name="id">
+      <label>Nome ou empresa<input name="name" required maxlength="180"></label>
+      <label>E-mail<input name="email" type="email" maxlength="180"></label>
+      <label>Telefone<input name="phone" type="tel" maxlength="40"></label>
+      <label>NIF<input name="tax" maxlength="30"></label>
+      <label>Morada<input name="address" maxlength="240"></label>
+      <label>Observações<input name="notes" maxlength="500"></label>
+      <button>Guardar cliente</button><button type="reset">Nova ficha</button>
+    </form>
+  </section>
+  <section><h2>Lista de clientes</h2><div id="client-list"></div></section>
+</div>
+<div id="reports-area" hidden>
+  <section><h2>Relatório comercial</h2>
+    <form id="report-filter">
+      <label>Prazo de entrega desde<input name="from" type="date"></label>
+      <label>Até<input name="to" type="date"></label>
+      <button type="button" id="export-report">Descarregar CSV</button>
+    </form>
+    <div class="metrics" id="report-metrics"></div>
+    <div id="report-list"></div>
+  </section>
 </div>
 <div id="sales-area" hidden>
   <section>
@@ -175,5 +208,5 @@
 </div>
 
 </div>
-<script type="module" src="./comercial.mjs"></script>
+<script type="module" src="./gestao.mjs"></script>
 </html>
