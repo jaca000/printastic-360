@@ -3,29 +3,75 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Produção | Printastic 360</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box }
-  body { margin: 0 auto; padding: 2rem 1rem; max-width: 76rem; font: 16px system-ui,sans-serif; color: #172036; background: #f1f4fa }
-  h1 { margin: .45rem 0 1.4rem; font-size: clamp(2rem,5vw,3.4rem); letter-spacing: -.04em }
-  h2 { margin: 0 0 1rem; font-size: 1.25rem }
-  section, details { background: white; border: 1px solid #dbe2ef; padding: 1.25rem; border-radius: 1rem; margin-bottom: 1rem }
-  summary { cursor: pointer; font-weight: 700 }
-  form { display: grid; gap: .85rem; grid-template-columns: repeat(auto-fit,minmax(min(100%,12rem),1fr)); align-items: end }
-  details form { margin-top: 1rem }
-  label { display: grid; gap: .35rem; font-size: .88rem; font-weight: 600 }
-  input,select,button { font: inherit; padding: .65rem; border-radius: .5rem; min-width: 0 }
-  input,select { border: 1px solid #aab7ce; width: 100%; background: white }
-  button { color: white; background: #4338ca; border: 0; cursor: pointer }
-  button:disabled { opacity: .6; cursor: wait }
-  a { color: #3730a3 }
-  .columns { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,27rem),1fr)); gap: 1rem }
-  article + article { border-top: 1px solid #dbe2ef; padding-top: .9rem; margin-top: .9rem }
-  article p { margin: .4rem 0; overflow-wrap: anywhere }
-  [role="status"] { min-height: 1.5rem }
-  .late { color: #a42029; font-weight: 700 }
+  :root { color-scheme: dark; --ink:#f4f6ff; --sub:#aeb9d1; --line:#2a3550; --panel:#131d31; --accent:#9be0d2; font-family:Inter,system-ui,sans-serif }
+  * { box-sizing:border-box }
+  [hidden] { display:none!important }
+  body { margin:0; min-height:100vh; background:#0b1220; color:var(--ink) }
+  .shell { max-width:1350px; margin:auto; padding:0 clamp(18px,5vw,72px) 48px }
+  .top { display:flex; justify-content:space-between; align-items:center; padding:24px 0; gap:1rem }
+  .brand { display:flex; align-items:center; gap:12px; font:700 22px 'Space Grotesk',sans-serif }
+  .top nav { display:flex; flex-wrap:wrap; gap:18px }
+  a { color:#c9d4ff; text-underline-offset:4px }
+  .top a { font-size:13px }
+  .hero { position:relative; overflow:hidden; isolation:isolate; padding:clamp(26px,6vw,75px); border:1px solid #485b88; border-radius:24px; background:radial-gradient(ellipse at 90% 115%,#d8899759 0,transparent 58%),radial-gradient(ellipse at 65% -25%,#9be0d25e 0,transparent 55%),linear-gradient(132deg,#192c4a,#254567 68%,#354466); display:grid; grid-template-columns:minmax(0,1fr) minmax(145px,240px); align-items:center; gap:clamp(22px,6vw,70px) }
+  .hero::after { content:""; position:absolute; inset:0; z-index:-1; opacity:.36; background:repeating-linear-gradient(135deg,transparent 0 36px,#c4d4ff35 37px 38px); mask-image:linear-gradient(90deg,transparent 42%,black) }
+  .hero-logo { display:block; width:100%; max-width:235px; margin:auto; filter:drop-shadow(0 12px 25px #10192990) }
+  .hero h1 { margin:0; font:700 clamp(46px,8vw,96px)/.93 'Space Grotesk',sans-serif; letter-spacing:-.075em; max-width:9ch }
+  .hero p { margin:22px 0 0; color:#e3eafa; max-width:43ch; line-height:1.6 }
+  .session { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:20px 0 0; flex-wrap:wrap }
+  .session p { font-size:13px; color:var(--sub); margin:0; line-height:1.6 }
+  .session .buttons { display:flex; flex-wrap:wrap; gap:8px }
+  section,details { background:var(--panel); border:1px solid var(--line); padding:clamp(15px,2.5vw,27px); border-radius:17px; margin-bottom:14px; min-width:0 }
+  #pilot { background:transparent; border:0; padding:0; margin:0 }
+  #connection { margin-top:14px; padding:13px 18px }
+  h2,summary { color:var(--ink); font:700 21px 'Space Grotesk',sans-serif; letter-spacing:-.025em }
+  h2 { margin:0 0 15px }
+  summary { cursor:pointer }
+  #connection summary { font-size:15px }
+  form { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr)); align-items:end; margin-top:16px }
+  label { display:grid; gap:6px; font-size:12px; font-weight:600; color:var(--sub) }
+  input,select,button { min-width:0; font:inherit; border-radius:9px; padding:10px 12px }
+  input,select { color:var(--ink); background:#0d1729; border:1px solid #3a4865; width:100% }
+  button { font-size:13px; font-weight:700; color:#102722; background:var(--accent); border:1px solid transparent; cursor:pointer }
+  button:hover { filter:brightness(1.1) }
+  button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible { outline:2px solid #f2adb7; outline-offset:3px }
+  #backup,article button { color:#e9efff; background:#24344f; border-color:#415577 }
+  .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:0 0 14px }
+  .metric { padding:17px; background:var(--panel); border:1px solid var(--line); border-top:2px solid #77a7cc; border-radius:14px; min-width:0 }
+  .metric:nth-child(2) { border-top-color:#dd98a6 }
+  .metric:nth-child(3) { border-top-color:#9be0d2 }
+  .metric span { display:block; color:var(--sub); font-size:12px; line-height:1.4 }
+  .metric strong { display:block; margin-top:6px; font:700 clamp(21px,3vw,36px)/1.1 'Space Grotesk',sans-serif; letter-spacing:-.045em; overflow-wrap:anywhere }
+  .columns { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:14px }
+  .columns section,.columns details { margin-bottom:0 }
+  main>.columns, main>section { margin-bottom:14px }
+  #purchases,#queue,#catalog { color:var(--sub); font-size:14px; line-height:1.5 }
+  #purchases strong,#queue strong,#catalog strong { color:var(--ink); font-size:16px }
+  article { background:#101a2d; border:1px solid #344362; border-radius:12px; padding:14px }
+  article+article { margin-top:10px }
+  article p { margin:7px 0; overflow-wrap:anywhere }
+  #status { min-height:1.3em; color:var(--accent); font-size:13px; margin:12px 0 }
+  .late { color:#ff9f9e; font-weight:700 }
+  @media(max-width:720px) { .metrics { grid-template-columns:repeat(2,minmax(0,1fr)) } .columns { grid-template-columns:1fr } .top { flex-wrap:wrap } .hero { border-radius:18px; grid-template-columns:1fr } .hero-logo { margin:0; max-width:138px; grid-row:1 } }
 </style>
-<h1>Printastic 360 · Produção</h1>
-<section id="pilot"><p>Os registos deste modo ficam neste navegador. Usa o mesmo perfil do Chrome e descarrega cópias de segurança.</p><button id="local">Começar neste navegador</button> <button id="backup" hidden>Descarregar cópia</button></section>
+<div class="shell">
+<header class="top">
+  <div class="brand">Printastic 360</div>
+  <nav aria-label="Produção"><a href="#planning">Planeamento</a><a href="#connection">Ligação à API</a></nav>
+</header>
+<div class="hero">
+  <div><h1>Gestão de produção</h1>
+  <p>Organiza as encomendas por prazo, prepara o trabalho e vê o que falta comprar.</p></div>
+  <img class="hero-logo" src="./logo-printastic-al.png" alt="Printastic_Al — Se imaginas, criamos!">
+</div>
+<section id="pilot" class="session">
+  <p>No modo navegador, os registos ficam neste perfil do Chrome.</p>
+  <div class="buttons"><button id="local">Começar neste navegador</button> <button id="backup" hidden>Descarregar cópia</button></div>
+</section>
 <details id="connection">
   <summary>Ligação à API</summary>
   <form id="login">
@@ -35,7 +81,14 @@
   </form>
 </details>
 <p id="status" role="status"></p>
+<div id="planning"></div>
 <main id="workspace" hidden>
+  <div class="metrics" aria-label="Resumo do planeamento">
+    <div class="metric"><span>Encomendas pendentes</span><strong id="metric-orders">0</strong></div>
+    <div class="metric"><span>Encomendas em atraso</span><strong id="metric-late">0</strong></div>
+    <div class="metric"><span>Unidades por comprar</span><strong id="metric-units">0</strong></div>
+    <div class="metric"><span>Custo de compra estimado</span><strong id="metric-cost">0,00 €</strong></div>
+  </div>
   <div class="columns">
     <details>
       <summary>Ficha de produto</summary>
@@ -68,5 +121,6 @@
   </div>
   <section><h2>Catálogo</h2><div id="catalog"></div></section>
 </main>
+</div>
 <script type="module" src="./printastic360.mjs"></script>
 </html>

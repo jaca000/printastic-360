@@ -132,6 +132,16 @@ function start() {
   async function refresh() {
     const { products, orders } = await api()
     const { queue, purchases } = plan(products, orders)
+    const currentDate = today()
+    const number = new Intl.NumberFormat('pt-PT')
+    const totalUnits = purchases.reduce((total, item) => total + item.quantity, 0)
+    const totalCost = purchases.reduce((total, item) => total + item.quantity * Number(item.product.cost), 0)
+    element('metric-orders').textContent = number.format(new Set(queue.map(item => item.reference)).size)
+    element('metric-late').textContent = number.format(new Set(
+      queue.filter(item => item.due < currentDate).map(item => item.reference)
+    ).size)
+    element('metric-units').textContent = number.format(totalUnits)
+    element('metric-cost').textContent = money.format(totalCost)
     const select = element('order').elements.sku
     const selected = select.value
     select.replaceChildren(...products.map(product => new Option(product.name, product.sku)))
@@ -140,8 +150,8 @@ function start() {
     list('queue', queue, 'Sem trabalho pendente.', order => {
       const card = node('article', '')
       const deadline = node('p', 'Prazo ' + dateLabel.format(new Date(order.due)) +
-        (order.due < today() ? ' · Em atraso' : ''))
-      if (order.due < today()) deadline.className = 'late'
+        (order.due < currentDate ? ' · Em atraso' : ''))
+      if (order.due < currentDate) deadline.className = 'late'
       card.append(node('strong', order.reference + ' · ' + order.customer), deadline,
         node('p', order.quantity + ' × ' + order.product.name),
         node('p', order.reserved + ' em stock · ' + order.missing + ' por comprar'))
