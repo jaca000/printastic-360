@@ -62,10 +62,10 @@
 <div class="shell">
 <header class="top">
   <a class="brand" href="./">Printastic<span>360</span></a>
-  <nav class="nav-tabs" aria-label="Menu principal">
-    <a class="active" aria-current="page" href="./"><span aria-hidden="true">▦</span> Produção</a>
-    <a href="./oportunidades.html"><span aria-hidden="true">↗</span> Oportunidades</a>
-    <a href="./mockup.html"><span aria-hidden="true">✦</span> Estúdio de mockups</a>
+  <nav id="app-menu" hidden class="nav-tabs" aria-label="Menu principal">
+    <a class="active" aria-current="page" href="#producao" data-view="production"><span aria-hidden="true">▦</span> Produção</a>
+    <a href="#oportunidades" data-view="opportunities"><span aria-hidden="true">↗</span> Oportunidades</a>
+    <a href="#estudio" data-view="studio"><span aria-hidden="true">✦</span> Estúdio de mockups</a>
   </nav>
 </header>
 <div class="hero">
@@ -74,16 +74,16 @@
   <img class="hero-logo" src="./logo-printastic-al.png" alt="Printastic_Al — Se imaginas, criamos!">
 </div>
 <section id="pilot" class="session">
-  <div><h2>Acesso à produção</h2><p>Os registos de produção ficam cifrados neste navegador.</p></div>
+  <div><h2>Entrar no Printastic 360</h2><p>Os registos de produção ficam cifrados neste navegador.</p></div>
   <form id="local-login" class="unlock">
     <label>Utilizador<input name="username" autocomplete="username" value="josealmanso" readonly></label>
-    <label>Palavra-passe local<input type="password" name="password" required minlength="12" autocomplete="current-password"></label>
-    <label id="confirm-wrap">Confirmar palavra-passe<input type="password" name="confirmPassword" minlength="12" autocomplete="new-password"></label>
+    <label>Palavra-passe local<input type="password" name="password" required autocomplete="current-password"></label>
+    <label id="confirm-wrap">Confirmar palavra-passe<input type="password" name="confirmPassword" autocomplete="new-password"></label>
     <button id="local" type="submit">Desbloquear</button>
   </form>
   <div class="buttons"><button id="backup" hidden>Descarregar cópia</button><button id="lock" hidden>Bloquear</button></div>
 </section>
-<details id="connection">
+<details id="connection" hidden>
   <summary>Ligação à API</summary>
   <form id="login">
     <label>Endereço HTTPS da API<input name="endpoint" type="url" required></label>
@@ -92,7 +92,7 @@
   </form>
 </details>
 <p id="status" role="status"></p>
-<div id="planning"></div>
+<iframe id="app-view" hidden title="Printastic 360" style="width:100%;height:82vh;min-height:500px;border:0"></iframe>
 <main id="workspace" hidden>
   <div class="metrics" aria-label="Resumo do planeamento">
     <div class="metric"><span>Encomendas pendentes</span><strong id="metric-orders">0</strong></div>
@@ -133,5 +133,5 @@
   <section><h2>Catálogo</h2><div id="catalog"></div></section>
 </main>
 </div>
-<script type="module" src="./producao.mjs"></script>
+<script type="module" src="./painel.mjs"></script>
 </html>
