@@ -25,7 +25,7 @@ PRODUCTS = [
     (r"saco|bolsa|mochila|tote|t[aá]bua|bambu|rel[oó]gio", "Pequena coleção com iniciais e opção de logótipo para encomendas em quantidade", "Comércio, empresas e eventos", ""),
     (r"iman|[ií]m[aã]|moldura|fotopain|azulej|chaveiro|llavero|porta-chaves|puzzle|pulseira|pulsera|cadern|bloco|esferogr[aá]fica", "Edição com nome, data e motivo gráfico alusivo à ocasião", "Famílias, empresas e associações", ""),
 ]
-EXCLUDE = re.compile(r"impresora|impressora|plancha term|prensa|recambio|resist[eê]ncia|consum[ií]ve|bobina|papel|tinta|pel[ií]cula|plotter|maquina|m[aá]quina|software|fecho da|fita term", re.I)
+EXCLUDE = re.compile(r"impresora|impressora|plancha|prensa|recambio|resist[eê]ncia|consum[ií]ve|bobina|papel|tinta|pel[ií]cula|plotter|maquina|m[aá]quina|software|fecho da|fita term|acess[oó]ri[oa] para prens|repuesto|cabe[cç]al de impress", re.I)
 PRICE = re.compile(r"(?:€\s*)?\d[\d .]*[,.]\d{2}\s*€|€\s*\d[\d .]*[,.]\d{2}")
 AGENT = "Printastic360Catalog/1.0"
 HTTP = requests.Session()
@@ -82,6 +82,12 @@ def records(supplier, country, source, selector, season):
         name = (name_node or anchor).get_text(" ", strip=True)
         name = unicodedata.normalize("NFC", name).strip()
         match = next((row for row in PRODUCTS if re.search(row[0], name, re.I)), None)
+        if not match and re.search(
+            r"personaliz|sublim[aá]v|sublimab|para sublima|por personalizar|grava[cç][aã]o|grabado|laser",
+            price_area.get_text(" ", strip=True), re.I
+        ):
+            match = ("", "Testar uma personalização com nome, grafismo ou logótipo sobre a área aplicável",
+                     "Empresas, famílias e eventos", "")
         if href in seen or len(name) < 4 or len(name) > 170 or not match or EXCLUDE.search(name):
             continue
         if match[3] == "Natal" and "Natal" not in season:
@@ -95,6 +101,10 @@ def records(supplier, country, source, selector, season):
             "recommendation": "Faz uma amostra e abre pré-encomendas para a campanha " + (match[3] or season) + ".",
         })
     return items
+
+
+def identity(item):
+    return item["supplier"], " ".join(re.findall(r"\w+", item["name"].casefold()))
 
 
 def main():
@@ -114,9 +124,19 @@ def main():
             stats.append({"supplier": supplier, "country": country, "checked": False, "found": 0})
             print(f"{supplier}: {error}", flush=True)
     # Publish a first edition and then prefer newly detected listings without claiming launch dates.
-    current = previous.get("items", []) if previous.get("date") == today else []
+    available = {item["url"]: item for item in candidates}
+    checked = {source["supplier"] for source in stats if source["checked"]}
+    current = []
+    used_names = set()
+    if previous.get("date") == today:
+        for item in previous.get("items", []):
+            name_key = identity(item)
+            still_available = item["url"] in available or item["supplier"] not in checked
+            if still_available and name_key not in used_names and not EXCLUDE.search(item["name"]):
+                current.append(available.get(item["url"], item))
+                used_names.add(name_key)
     current_urls = {item["url"] for item in current}
-    fresh = [item for item in candidates if item["url"] not in seen and item["url"] not in current_urls]
+    fresh = [item for item in candidates if seen.get(item["url"], today) == today and item["url"] not in current_urls]
     fresh.sort(key=lambda item: (item["season"] != "Natal", item["supplier"].lower(), item["name"].lower()))
     count = {}
     selected = list(current)
@@ -126,9 +146,10 @@ def main():
         if len(selected) >= 10:
             break
         supplier = item["supplier"]
-        if count.get(supplier, 0) >= 3:
+        if count.get(supplier, 0) >= 3 or identity(item) in used_names:
             continue
         selected.append(item)
+        used_names.add(identity(item))
         count[supplier] = count.get(supplier, 0) + 1
     for item in candidates:
         seen.setdefault(item["url"], today)
