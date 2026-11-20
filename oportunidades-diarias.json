@@ -14,18 +14,6 @@
       "recommendation": "Faz uma amostra e abre pré-encomendas para a campanha Natal."
     },
     {
-      "name": "Gravata de natal “copito”",
-      "supplier": "Cola-me",
-      "country": "PT",
-      "url": "https://www.colame.net/produto/gravata-de-natal-copito-2/",
-      "season": "Natal",
-      "idea": "Enfeite ou presente de Natal com nome e ano",
-      "audience": "Famílias e empresas",
-      "buyPrice": "€ 7,66 no catálogo",
-      "sellPrice": "A calcular após portes e personalização",
-      "recommendation": "Faz uma amostra e abre pré-encomendas para a campanha Natal."
-    },
-    {
       "name": "Bloco 8×11  100 folhas",
       "supplier": "Cola-me",
       "country": "PT",
@@ -98,14 +86,26 @@
       "recommendation": "Faz uma amostra e abre pré-encomendas para a campanha Natal e presentes de equipa."
     },
     {
-      "name": "Plancha de tazas InkOne M1",
+      "name": "Alfinete de gravata",
+      "supplier": "Cola-me",
+      "country": "PT",
+      "url": "https://www.colame.net/produto/alfinete-de-gravata/",
+      "season": "Natal e presentes de equipa",
+      "idea": "Testar uma personalização com nome, grafismo ou logótipo sobre a área aplicável",
+      "audience": "Empresas, famílias e eventos",
+      "buyPrice": "€ 2,84 no catálogo",
+      "sellPrice": "A calcular após portes e personalização",
+      "recommendation": "Faz uma amostra e abre pré-encomendas para a campanha Natal e presentes de equipa."
+    },
+    {
+      "name": "LaserPecker LP2 Plus 10W | Grabadora y cortadora y cortadora láser de escritorio",
       "supplier": "Sublimet",
       "country": "ES",
-      "url": "https://www.sublimet.com/es/plancha-tazas-inkone-ik-vt201/",
+      "url": "https://www.sublimet.com/es/laserpecker-lp2-plus-grabadora-cortadora-laser/",
       "season": "Natal e presentes de equipa",
-      "idea": "Nome e grafismo a condizer com a campanha; confirmar revestimento e técnica",
+      "idea": "Testar uma personalização com nome, grafismo ou logótipo sobre a área aplicável",
       "audience": "Empresas, famílias e eventos",
-      "buyPrice": "1 185,13 € no catálogo",
+      "buyPrice": "509,79 € no catálogo",
       "sellPrice": "A calcular após portes e personalização",
       "recommendation": "Faz uma amostra e abre pré-encomendas para a campanha Natal e presentes de equipa."
     }
@@ -115,19 +115,19 @@
       "supplier": "Print e Poupe",
       "country": "PT",
       "checked": true,
-      "found": 20
+      "found": 21
     },
     {
       "supplier": "Cola-me",
       "country": "PT",
       "checked": true,
-      "found": 23
+      "found": 46
     },
     {
       "supplier": "Sublimet",
       "country": "ES",
       "checked": true,
-      "found": 3
+      "found": 5
     },
     {
       "supplier": "Brildor",
@@ -182,6 +182,33 @@
     "https://www.colame.net/produto/gravata-de-natal-copito-2/": "2026-11-20",
     "https://www.sublimet.com/es/plancha-tazas-inkone-ik-vt201/": "2026-11-20",
     "https://www.sublimet.com/es/llaveros-metalicos-casa-uv-umy-x100/": "2026-11-20",
-    "https://www.sublimet.com/es/llaveros-metalicos-cuadrados-sm-10d-personalizar/": "2026-11-20"
+    "https://www.sublimet.com/es/llaveros-metalicos-cuadrados-sm-10d-personalizar/": "2026-11-20",
+    "https://printepoupe.com/loja/cracha-magnetico-p-roupa-p-personalizar-fixacao-sem-alfinetes": "2026-11-20",
+    "https://www.colame.net/produto/lampara-extensible/": "2026-11-20",
+    "https://www.colame.net/produto/tapete-rato-quatricromia-3/": "2026-11-20",
+    "https://www.colame.net/produto/tapete-rato-quatricromia-23x20-cm/": "2026-11-20",
+    "https://www.colame.net/produto/tapete-rato-quatricromia/": "2026-11-20",
+    "https://www.colame.net/produto/tapete-rato-quatricromia-22x15-cm/": "2026-11-20",
+    "https://www.colame.net/produto/calendario-de-sobremesa-gr/": "2026-11-20",
+    "https://www.colame.net/produto/alfinete-de-gravata/": "2026-11-20",
+    "https://www.colame.net/produto/preservativo-em-estojo/": "2026-11-20",
+    "https://www.colame.net/produto/foto-piruleta-redonda/": "2026-11-20",
+    "https://www.colame.net/produto/foto-piruleta-coracao/": "2026-11-20",
+    "https://www.colame.net/produto/portalapiz-hexagonal/": "2026-11-20",
+    "https://www.colame.net/produto/calendario-postal-pequeno/": "2026-11-20",
+    "https://www.colame.net/produto/toalha-micro-fibra-gym/": "2026-11-20",
+    "https://www.colame.net/produto/placa-contraplacado-betula-4mm-60x40cm-ideal-para-corte-e-gravacao-a-laser/": "2026-11-20",
+    "https://www.colame.net/produto/portachaves-busca-objectos-2/": "2026-11-20",
+    "https://www.colame.net/produto/portachaves-busca-objectos/": "2026-11-20",
+    "https://www.colame.net/produto/placa-contraplacado-betula-3mm-60x40cm-ideal-para-corte-e-gravacao-a-laser-modelo-2/": "2026-11-20",
+    "https://www.colame.net/produto/colgante-bocina-katar/": "2026-11-20",
+    "https://www.colame.net/produto/articulo-promocional-con-lote/": "2026-11-20",
+    "https://www.colame.net/produto/paraguas-automatico-cardiff/": "2026-11-20",
+    "https://www.colame.net/produto/cuelgabolsos-capri/": "2026-11-20",
+    "https://www.colame.net/produto/manta-de-viajem-calidez/": "2026-11-20",
+    "https://www.colame.net/produto/cubitera-vintage-2/": "2026-11-20",
+    "https://www.sublimet.com/es/laserpecker-lp5-grabadora-laser-portatil-diodo-fibra-inteligente-20w/": "2026-11-20",
+    "https://www.sublimet.com/es/laserpecker-lp2-plus-grabadora-cortadora-laser/": "2026-11-20",
+    "https://www.sublimet.com/es/laserpecker-lx2-cortadora-laser/": "2026-11-20"
   }
 }
