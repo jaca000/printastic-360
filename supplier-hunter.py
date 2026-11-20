@@ -25,7 +25,7 @@ PRODUCTS = [
     (r"saco|bolsa|mochila|tote|t[aá]bua|bambu|rel[oó]gio", "Pequena coleção com iniciais e opção de logótipo para encomendas em quantidade", "Comércio, empresas e eventos", ""),
     (r"iman|[ií]m[aã]|moldura|fotopain|azulej|chaveiro|llavero|porta-chaves|puzzle|pulseira|pulsera|cadern|bloco|esferogr[aá]fica", "Edição com nome, data e motivo gráfico alusivo à ocasião", "Famílias, empresas e associações", ""),
 ]
-EXCLUDE = re.compile(r"impresora|impressora|plancha|prensa|recambio|resist[eê]ncia|consum[ií]ve|bobina|papel|tinta|pel[ií]cula|plotter|maquina|m[aá]quina|software|fecho da|fita term|acess[oó]ri[oa] para prens|repuesto|cabe[cç]al de impress", re.I)
+EXCLUDE = re.compile(r"impresora|impressora|plancha|prensa|recambio|resist[eê]ncia|consum[ií]ve|bobina|papel|tinta|pel[ií]cula|plotter|maquina|m[aá]quina|software|grabadora|cortadora|laserpecker|xTool|engraver|cutter|fecho da|fita term|acess[oó]ri[oa] para prens|repuesto|cabe[cç]al de impress", re.I)
 PRICE = re.compile(r"(?:€\s*)?\d[\d .]*[,.]\d{2}\s*€|€\s*\d[\d .]*[,.]\d{2}")
 AGENT = "Printastic360Catalog/1.0"
 HTTP = requests.Session()
