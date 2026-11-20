@@ -154,6 +154,12 @@
       <button>Guardar cliente</button><button type="reset">Nova ficha</button>
     </form>
   </section>
+  <section><h2>Importar clientes do Odoo</h2>
+    <form id="odoo-form">
+      <label>Ficheiro CSV<input name="csv" type="file" accept=".csv,text/csv" required></label>
+      <button>Importar clientes</button>
+    </form><p id="odoo-result" role="status"></p>
+  </section>
   <section><h2>Lista de clientes</h2><div id="client-list"></div></section>
 </div>
 <div id="reports-area" hidden>
@@ -217,5 +223,5 @@
 </div>
 
 </div>
-<script type="module" src="./medidas.mjs"></script>
+<script type="module" src="./importacao.mjs"></script>
 </html>
