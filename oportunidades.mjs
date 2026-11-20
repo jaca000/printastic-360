@@ -80,3 +80,24 @@ get('paste').onclick = () => importReport(get('pasted').value)
 get('edition').onchange = event => show(event.target.value)
 const latest = Object.keys(editions).sort().at(-1)
 if (latest) refresh(latest)
+
+async function loadDaily() {
+  const indicator = get('automatic')
+  try {
+    const response = await fetch('https://raw.githubusercontent.com/jaca000/printastic-360/main/oportunidades-diarias.json', {
+      cache: 'no-store', signal: AbortSignal.timeout(8000)
+    })
+    if (!response.ok) throw new Error('Edição indisponível')
+    const report = await response.json()
+    if (!Array.isArray(report.sources)) throw new Error('Edição inválida')
+    importReport(JSON.stringify({ date: report.date, items: report.items }))
+    const available = report.sources.filter(source => source.checked).map(source => source.supplier)
+    const unavailable = report.sources.filter(source => !source.checked).map(source => source.supplier)
+    indicator.textContent = 'Pesquisa automática · ' + report.date +
+      ' · Verificados: ' + (available.join(', ') || 'nenhum') +
+      (unavailable.length ? ' · Indisponíveis: ' + unavailable.join(', ') : '')
+  } catch {
+    indicator.textContent = 'Edição automática indisponível neste momento.'
+  }
+}
+loadDaily()
