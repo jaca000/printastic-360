@@ -93,8 +93,17 @@ def records(supplier, country, source, selector, season):
         if match[3] == "Natal" and "Natal" not in season:
             continue
         seen.add(href)
+        photo = price_area.select_one("img")
+        image_url = urljoin(source, (photo.get("data-src") or photo.get("src") or "") if photo else "")
+        image_parts = urlsplit(image_url)
+        image_url = image_url if image_parts.scheme == "https" and image_parts.path != original.path else ""
+        ref_node = price_area.select_one("[itemprop=sku], [data-product-sku], .sku, .reference")
+        sku = (ref_node.get("data-product-sku") or ref_node.get("content") or ref_node.get_text(strip=True)) if ref_node else ""
+        if not sku:
+            ref = re.search(r"\bRef[.:]\s*([\w-]{3,40})", price_area.get_text(" ", strip=True), re.I)
+            sku = ref.group(1) if ref else ""
         items.append({
-            "name": name, "supplier": supplier, "country": country, "url": href,
+            "name": name, "sku": sku, "photoUrl": image_url, "supplier": supplier, "country": country, "url": href,
             "season": match[3] or season, "idea": match[1], "audience": match[2],
             "buyPrice": (price.group().strip() + " no catálogo") if price else "Consultar ficha",
             "sellPrice": "A calcular após portes e personalização",
@@ -153,7 +162,11 @@ def main():
         count[supplier] = count.get(supplier, 0) + 1
     for item in candidates:
         seen.setdefault(item["url"], today)
-    today_edition = {"date": today, "items": selected, "sources": stats, "seen": seen}
+    catalogue = {key: value for key, value in previous.get("catalogue", {}).items()
+                 if value.get("date", "") >= str(now.date().fromordinal(now.date().toordinal() - 30))}
+    for item in candidates:
+        catalogue[item["url"]] = {**{key: item[key] for key in ("name", "sku", "photoUrl", "supplier", "buyPrice")}, "date": today}
+    today_edition = {"date": today, "items": selected, "sources": stats, "seen": seen, "catalogue": catalogue}
     target.write_text(json.dumps(today_edition, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"date": today, "selected": len(selected), "sources": stats}))
 
