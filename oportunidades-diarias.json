@@ -96,18 +96,6 @@
       "buyPrice": "€ 2,84 no catálogo",
       "sellPrice": "A calcular após portes e personalização",
       "recommendation": "Faz uma amostra e abre pré-encomendas para a campanha Natal e presentes de equipa."
-    },
-    {
-      "name": "LaserPecker LP2 Plus 10W | Grabadora y cortadora y cortadora láser de escritorio",
-      "supplier": "Sublimet",
-      "country": "ES",
-      "url": "https://www.sublimet.com/es/laserpecker-lp2-plus-grabadora-cortadora-laser/",
-      "season": "Natal e presentes de equipa",
-      "idea": "Testar uma personalização com nome, grafismo ou logótipo sobre a área aplicável",
-      "audience": "Empresas, famílias e eventos",
-      "buyPrice": "509,79 € no catálogo",
-      "sellPrice": "A calcular após portes e personalização",
-      "recommendation": "Faz uma amostra e abre pré-encomendas para a campanha Natal e presentes de equipa."
     }
   ],
   "sources": [
@@ -127,7 +115,7 @@
       "supplier": "Sublimet",
       "country": "ES",
       "checked": true,
-      "found": 5
+      "found": 2
     },
     {
       "supplier": "Brildor",
