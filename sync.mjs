@@ -806,6 +806,10 @@ function start() {
     }
     list('sales-list', sales, quote ? 'Ainda não há orçamentos.' : 'Ainda não há encomendas registadas neste ecrã.', sale => {
       const card = node('article', '')
+      if (!quote) {
+        card.dataset.orderReference = sale.reference
+        card.tabIndex = -1
+      }
       const total = saleTotal(sale)
       card.append(node('strong', sale.reference + ' · ' + sale.customer),
         node('p', 'Prazo ' + dateLabel.format(new Date(sale.due)) + ' · ' + money.format(total / 100)))
@@ -1070,6 +1074,37 @@ function start() {
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
+  function renderDeliveryAlerts(currentDate) {
+    const upcoming = new Date(currentDate)
+    upcoming.setUTCDate(upcoming.getUTCDate() + 2)
+    const lastDate = upcoming.toISOString().slice(0, 10)
+    const alerts = savedSales
+      .filter(sale => sale.kind === 'order' && !sale.closedAt &&
+        /^\d{4}-\d{2}-\d{2}$/.test(sale.due) && sale.due <= lastDate)
+      .map(sale => ({ sale, state: currentOrderState(sale) }))
+      .filter(({ sale, state }) => state !== 'closed' &&
+        (sale.due <= currentDate || state === 'pending' || state === 'producing'))
+      .sort((a, b) => a.sale.due.localeCompare(b.sale.due))
+
+    element('delivery-alerts').hidden = alerts.length === 0
+    element('delivery-alert-list').replaceChildren(...alerts.map(({ sale, state }) => {
+      const card = node('article', '')
+      const label = sale.due < currentDate ? 'Entrega em atraso'
+        : sale.due === currentDate ? 'Entrega hoje' : 'Entrega próxima'
+      const title = node('strong', state === 'ready' ? label + ' · Por entregar' : label)
+      if (sale.due < currentDate) title.className = 'late'
+      card.append(title, node('p', sale.reference + ' · ' + sale.customer + ' · ' +
+        dateLabel.format(new Date(sale.due))), button('Ver encomenda', () => {
+        element('order-filter').value = 'active'
+        selectView('orders')
+        const orderCard = [...element('sales-list').children]
+          .find(item => item.dataset.orderReference === sale.reference)
+        orderCard?.focus()
+      }))
+      return card
+    }))
+  }
+
   async function refresh() {
     const { products, orders, sales, clients, productionLines: lines } = await api()
     productionLines = lines
@@ -1082,6 +1117,7 @@ function start() {
     renderSales(view)
     const { queue, purchases } = plan(products, orders)
     const currentDate = today()
+    renderDeliveryAlerts(currentDate)
     const number = new Intl.NumberFormat('pt-PT')
     const totalUnits = purchases.length
     const totalCost = purchases.reduce((total, item) => total + item.quantity * Number(item.product.cost), 0)

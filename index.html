@@ -123,6 +123,10 @@
 <p id="status" role="status"></p>
 <iframe id="app-view" hidden title="Printastic 360" style="width:100%;height:82vh;min-height:500px;border:0"></iframe>
 <main id="workspace" hidden>
+  <section id="delivery-alerts" aria-labelledby="delivery-alerts-title" hidden>
+    <h2 id="delivery-alerts-title">Alertas de entrega</h2>
+    <div id="delivery-alert-list"></div>
+  </section>
   <div class="metrics" aria-label="Resumo do planeamento">
     <div class="metric"><span>Encomendas pendentes</span><strong id="metric-orders">0</strong></div>
     <div class="metric"><span>Encomendas em atraso</span><strong id="metric-late">0</strong></div>
@@ -259,5 +263,5 @@
 </div>
 
 </div>
-<script type="module" src="./sync.mjs?v=profit-1"></script>
+<script type="module" src="./sync.mjs?v=alerts-1"></script>
 </html>
