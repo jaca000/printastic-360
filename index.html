@@ -72,10 +72,12 @@
   .invoice-toggle { flex-wrap: wrap }
   .invoice-toggle [hidden] { display: none }
   .invoice-toggle input[type=checkbox] { width: 1rem; min-height: auto; accent-color: #075dca }
-  #order-totals { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 14px }
+  #order-totals { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 14px }
   #order-totals[hidden] { display: none }
-  #order-totals .metric:last-child { background: #fff0d2; }
-  #order-totals .metric:last-child strong { color: #7d4406; }
+  #order-totals .metric:nth-child(3) { background: #fff0d2; }
+  #order-totals .metric:nth-child(3) strong { color: #7d4406; }
+  #order-profit-note { display:block; margin-top:5px; font-size:.78rem }
+  @media (max-width: 920px) { #order-totals { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
   @media (max-width: 560px) { #order-totals { grid-template-columns: 1fr } }
   #order-filter[hidden] { display: none }
   #sale-editor { margin-bottom: 14px }
@@ -226,6 +228,7 @@
       <div class="metric"><span>Valor das encomendas</span><strong data-total="total"></strong></div>
       <div class="metric"><span>Já recebido</span><strong data-total="paid"></strong></div>
       <div class="metric"><span>Por receber</span><strong data-total="outstanding"></strong></div>
+      <div class="metric"><span>Lucro estimado</span><strong id="order-profit"></strong><small id="order-profit-note"></small></div>
     </div>
     <div id="sales-list"></div>
   </section>
@@ -256,5 +259,5 @@
 </div>
 
 </div>
-<script type="module" src="./sync.mjs?v=document-1"></script>
+<script type="module" src="./sync.mjs?v=profit-1"></script>
 </html>

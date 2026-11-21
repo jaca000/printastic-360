@@ -32,6 +32,24 @@ export function orderTotals(orders) {
   }), { total: 0, paid: 0 })
   return { total, paid, outstanding: total - paid }
 }
+export function estimatedOrderProfit(orders, products) {
+  const catalogue = new Map(products.map(product => [product.sku, product]))
+  let profit = 0
+  for (const sale of orders) {
+    for (const line of sale.lines) {
+      if (isDeliveryLine(line)) continue
+      const product = catalogue.get(line.sku)
+      if (!product || product.cost == null || String(product.cost).trim() === '') return null
+      const unitCosts = [product.cost, product.personalization, product.packing, product.shipping]
+        .map(value => Number(String(value ?? '').trim().replace(',', '.')))
+      if (unitCosts.some(value => !Number.isFinite(value) || value < 0)) return null
+      const cost = unitCosts.reduce((sum, value) => sum + Math.round(value * 100), 0)
+      profit += lineAmount(line) - lineAmount({ ...line, price: cost })
+    }
+  }
+  return profit
+}
+
 const paymentState = sale => paidTotal(sale) >= saleTotal(sale) ? 'paid' : paidTotal(sale) ? 'partial' : 'unpaid'
 const paymentLabels = { paid: 'Paga', partial: 'Pagamento parcial', unpaid: 'Por pagar' }
 
@@ -154,6 +172,7 @@ function start() {
   }
   let view
   let catalogue = []
+  let productsForProfit = []
   let savedSales = []
   let productionLines = []
   let savedClients = []
@@ -415,6 +434,7 @@ function start() {
     vaultSession = undefined
     element('workspace').hidden = true
     catalogue = []
+    productsForProfit = []
     savedSales = []
     productionLines = []
     savedClients = []
@@ -772,6 +792,14 @@ function start() {
     totals.hidden = quote
     if (!quote) {
       const { total, paid, outstanding } = orderTotals(sales)
+      const profitBox = element('order-profit')
+      if (profitBox) {
+        const profit = estimatedOrderProfit(sales, productsForProfit)
+        profitBox.textContent = profit === null ? '—' : money.format(profit / 100)
+        element('order-profit-note').textContent = profit === null
+          ? 'Faltam custos no catálogo.'
+          : 'Custos atuais do catálogo. Exclui portes cobrados à parte.'
+      }
       for (const [name, amount] of Object.entries({ total, paid, outstanding })) {
         totals.querySelector('[data-total="' + name + '"]').textContent = money.format(amount / 100)
       }
@@ -1045,6 +1073,7 @@ function start() {
   async function refresh() {
     const { products, orders, sales, clients, productionLines: lines } = await api()
     productionLines = lines
+    productsForProfit = products
     catalogue = products.filter(product => !product.archived)
     savedSales = sales
     savedClients = clients
