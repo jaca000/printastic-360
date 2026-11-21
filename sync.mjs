@@ -25,6 +25,13 @@ export function plan(products, orders) {
 const states = { pending: 'Pendente', producing: 'Em produção', ready: 'Pronta', closed: 'Fechada' }
 const saleTotal = sale => sale.lines.reduce((sum, line) => sum + lineAmount(line), 0)
 const paidTotal = sale => (sale.payments ?? []).reduce((sum, item) => sum + item.amount, 0)
+export function orderTotals(orders) {
+  const { total, paid } = orders.reduce((sum, sale) => ({
+    total: sum.total + saleTotal(sale),
+    paid: sum.paid + paidTotal(sale)
+  }), { total: 0, paid: 0 })
+  return { total, paid, outstanding: total - paid }
+}
 const paymentState = sale => paidTotal(sale) >= saleTotal(sale) ? 'paid' : paidTotal(sale) ? 'partial' : 'unpaid'
 const paymentLabels = { paid: 'Paga', partial: 'Pagamento parcial', unpaid: 'Por pagar' }
 
@@ -252,6 +259,13 @@ function start() {
       else records.clients[index] = data
     } else if (path === '/order-state') {
       advanceOrder(records, data.reference, data.action, new Date().toISOString())
+    } else if (path === '/invoice-status') {
+      const sale = records.sales?.find(item => item.kind === 'order' && item.reference === data.reference)
+      if (!sale || typeof data.issued !== 'boolean') throw new Error('Encomenda indisponível.')
+      const number = data.issued ? String(data.number ?? '').trim() : ''
+      if (number.length > 120) throw new Error('O número da fatura pode ter até 120 caracteres.')
+      sale.invoiceIssued = data.issued
+      sale.invoiceNumber = number
     } else if (path === '/payment') {
       const sale = (records.sales ?? []).find(item => item.reference === data.reference && item.kind === 'order')
       const method = ['MB WAY', 'Transferência', 'Numerário'].includes(data.method)
@@ -593,6 +607,14 @@ function start() {
     const filter = element('order-filter').value
     const sales = savedSales.filter(sale => sale.kind === (quote ? 'quote' : 'order') &&
       (quote || filter === 'all' || (filter === 'active' ? !sale.closedAt : currentOrderState(sale) === filter))).reverse()
+    const totals = element('order-totals')
+    totals.hidden = quote
+    if (!quote) {
+      const { total, paid, outstanding } = orderTotals(sales)
+      for (const [name, amount] of Object.entries({ total, paid, outstanding })) {
+        totals.querySelector('[data-total="' + name + '"]').textContent = money.format(amount / 100)
+      }
+    }
     list('sales-list', sales, quote ? 'Ainda não há orçamentos.' : 'Ainda não há encomendas registadas neste ecrã.', sale => {
       const card = node('article', '')
       const total = saleTotal(sale)
@@ -609,6 +631,40 @@ function start() {
         const badges = node('div', '')
         badges.className = 'order-badges'
         badges.append(badge(states[state], state), badge(paymentLabels[payment], payment))
+        badges.append(badge(sale.invoiceIssued ? 'Fatura emitida' : 'Fatura por emitir',
+          sale.invoiceIssued ? 'paid' : 'pending'))
+        const invoice = node('form', '')
+        invoice.className = 'invoice-toggle'
+        const label = node('label', '')
+        const checkbox = node('input', '')
+        checkbox.type = 'checkbox'
+        checkbox.checked = Boolean(sale.invoiceIssued)
+        label.append(checkbox, node('span', 'Fatura emitida'))
+        const numberLabel = node('label', 'N.º da fatura')
+        numberLabel.hidden = !checkbox.checked
+        const number = node('input', '')
+        number.type = 'text'
+        number.maxLength = 120
+        number.value = sale.invoiceNumber ?? ''
+        numberLabel.append(number)
+        const saveInvoice = node('button', 'Guardar fatura')
+        saveInvoice.type = 'submit'
+        saveInvoice.hidden = true
+        checkbox.onchange = () => {
+          numberLabel.hidden = !checkbox.checked
+          saveInvoice.hidden = false
+          if (checkbox.checked) number.focus()
+        }
+        number.oninput = () => { saveInvoice.hidden = false }
+        invoice.onsubmit = event => {
+          event.preventDefault()
+          run(async () => {
+            await api('/invoice-status', { reference: sale.reference, issued: checkbox.checked, number: number.value })
+            await refresh()
+          }, 'Estado da fatura guardado.')
+        }
+        invoice.append(label, numberLabel, saveInvoice)
+        card.append(invoice)
         card.append(badges, node('p', 'Pago ' + money.format(paid / 100) + ' · Por pagar ' + money.format((total - paid) / 100)))
         for (const item of sale.payments ?? []) {
           details.append(node('p', item.date + ' · ' + item.method + ' · ' + money.format(item.amount / 100)))
@@ -764,6 +820,7 @@ function start() {
       (!form.from.value || sale.due >= form.from.value) && (!form.to.value || sale.due <= form.to.value) &&
       (!form.state.value || currentOrderState(sale) === form.state.value) &&
       (!form.payment.value || paymentState(sale) === form.payment.value) &&
+      (!form.invoice.value || Boolean(sale.invoiceIssued) === (form.invoice.value === 'issued')) &&
       sale.customer.toLocaleLowerCase('pt').includes(form.customer.value.trim().toLocaleLowerCase('pt')))
       .map(sale => {
         const total = saleTotal(sale)
@@ -789,7 +846,7 @@ function start() {
     list('report-list', rows, 'Nenhuma encomenda no período selecionado.', ({ sale, total, paid, outstanding }) => {
       const item = node('article', '')
       item.append(node('strong', sale.reference + ' · ' + sale.customer),
-        node('p', sale.due + ' · ' + states[currentOrderState(sale)] + ' · ' + paymentLabels[paymentState(sale)]),
+        node('p', sale.due + ' · ' + states[currentOrderState(sale)] + ' · ' + paymentLabels[paymentState(sale)] + ' · Fatura ' + (sale.invoiceIssued ? 'emitida' + (sale.invoiceNumber ? ' · ' + sale.invoiceNumber : '') : 'por emitir')),
         node('p', 'Total ' + money.format(total / 100) + ' · Recebido ' + money.format(paid / 100) + ' · Por receber ' + money.format(outstanding / 100)))
       return item
     })
@@ -802,9 +859,9 @@ function start() {
       const string = String(value)
       return '"' + (/^\s*[=+@-]/.test(string) ? "'" : '') + string.replaceAll('"', '""') + '"'
     }
-    const table = [['Referência', 'Cliente', 'Prazo', 'Estado', 'Pagamento', 'Total (€)', 'Pago (€)', 'Saldo (€)']]
+    const table = [['Referência', 'Cliente', 'Prazo', 'Estado', 'Pagamento', 'Fatura', 'N.º da fatura', 'Total (€)', 'Pago (€)', 'Saldo (€)']]
     for (const { sale, total, paid, outstanding } of reportRows())
-      table.push([sale.reference, sale.customer, sale.due, states[currentOrderState(sale)], paymentLabels[paymentState(sale)], ...[total, paid, outstanding].map(value => (value / 100).toFixed(2).replace('.', ','))])
+      table.push([sale.reference, sale.customer, sale.due, states[currentOrderState(sale)], paymentLabels[paymentState(sale)], sale.invoiceIssued ? 'Emitida' : 'Por emitir', sale.invoiceNumber ?? '', ...[total, paid, outstanding].map(value => (value / 100).toFixed(2).replace('.', ','))])
     const csv = '\uFEFF' + table.map(row => row.map(cell).join(';')).join('\r\n')
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
     const link = node('a', '')

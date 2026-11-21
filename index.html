@@ -67,6 +67,16 @@
   #report-metrics { margin-top:16px }
   #sales-total { align-self:center }
   #order-filter { width: min(100%, 15rem); margin-bottom: 12px }
+  .invoice-toggle { display: flex; align-items: center; gap: 8px; width: fit-content; margin: 8px 0; cursor: pointer }
+  .invoice-toggle label:first-child { display: flex; flex-direction: row; align-items: center; gap: 8px }
+  .invoice-toggle { flex-wrap: wrap }
+  .invoice-toggle [hidden] { display: none }
+  .invoice-toggle input[type=checkbox] { width: 1rem; min-height: auto; accent-color: #075dca }
+  #order-totals { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 14px }
+  #order-totals[hidden] { display: none }
+  #order-totals .metric:last-child { background: #fff0d2; }
+  #order-totals .metric:last-child strong { color: #7d4406; }
+  @media (max-width: 560px) { #order-totals { grid-template-columns: 1fr } }
   #order-filter[hidden] { display: none }
   #sale-editor { margin-top: 14px }
   .order-badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 }
@@ -178,6 +188,7 @@
       <label>Cliente<input name="customer" type="search" placeholder="Pesquisar cliente"></label>
       <label>Estado<select name="state"><option value="">Todos</option><option value="pending">Pendente</option><option value="producing">Em produção</option><option value="ready">Pronta</option><option value="closed">Fechada</option></select></label>
       <label>Pagamento<select name="payment"><option value="">Todos</option><option value="unpaid">Por pagar</option><option value="partial">Pagamento parcial</option><option value="paid">Paga</option></select></label>
+      <label>Fatura<select name="invoice"><option value="">Todas</option><option value="issued">Emitida</option><option value="pending">Por emitir</option></select></label>
       <button type="button" id="export-report">Descarregar CSV</button>
     </form>
     <div class="metrics" id="report-metrics"></div>
@@ -187,6 +198,11 @@
 <div id="sales-area" hidden>
   <section><h2 id="sales-list-title">Encomendas registadas</h2>
     <select id="order-filter" aria-label="Filtrar encomendas por estado"><option value="active">Ativas</option><option value="all">Todas</option><option value="pending">Pendentes</option><option value="producing">Em produção</option><option value="ready">Prontas</option><option value="closed">Fechadas</option></select>
+    <div class="metrics" id="order-totals" aria-label="Totais das encomendas filtradas" aria-live="polite" hidden>
+      <div class="metric"><span>Valor das encomendas</span><strong data-total="total"></strong></div>
+      <div class="metric"><span>Já recebido</span><strong data-total="paid"></strong></div>
+      <div class="metric"><span>Por receber</span><strong data-total="outstanding"></strong></div>
+    </div>
     <div id="sales-list"></div>
   </section>
   <details id="sale-editor">
@@ -238,5 +254,5 @@
 </div>
 
 </div>
-<script type="module" src="./sync.mjs?v=orders-1"></script>
+<script type="module" src="./sync.mjs?v=order-totals-at-1"></script>
 </html>
