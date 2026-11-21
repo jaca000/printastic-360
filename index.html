@@ -78,7 +78,7 @@
   #order-totals .metric:last-child strong { color: #7d4406; }
   @media (max-width: 560px) { #order-totals { grid-template-columns: 1fr } }
   #order-filter[hidden] { display: none }
-  #sale-editor { margin-top: 14px }
+  #sale-editor { margin-bottom: 14px }
   .order-badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 }
   .order-badge { padding: 4px 10px; border-radius: 999px; font-size: .86rem; font-weight: 750; color: #173766; background: #e4efff }
   .order-badge.producing, .order-badge.partial { background: #f2e7ff; color: #61209a }
@@ -196,15 +196,6 @@
   </section>
 </div>
 <div id="sales-area" hidden>
-  <section><h2 id="sales-list-title">Encomendas registadas</h2>
-    <select id="order-filter" aria-label="Filtrar encomendas por estado"><option value="active">Ativas</option><option value="all">Todas</option><option value="pending">Pendentes</option><option value="producing">Em produção</option><option value="ready">Prontas</option><option value="closed">Fechadas</option></select>
-    <div class="metrics" id="order-totals" aria-label="Totais das encomendas filtradas" aria-live="polite" hidden>
-      <div class="metric"><span>Valor das encomendas</span><strong data-total="total"></strong></div>
-      <div class="metric"><span>Já recebido</span><strong data-total="paid"></strong></div>
-      <div class="metric"><span>Por receber</span><strong data-total="outstanding"></strong></div>
-    </div>
-    <div id="sales-list"></div>
-  </section>
   <details id="sale-editor">
     <summary id="sales-title">Nova encomenda</summary>
     <form id="sales-form" class="sales-form">
@@ -229,6 +220,15 @@
       </div>
     </template>
   </details>
+  <section><h2 id="sales-list-title">Encomendas registadas</h2>
+    <select id="order-filter" aria-label="Filtrar encomendas por estado"><option value="active">Ativas</option><option value="all">Todas</option><option value="pending">Pendentes</option><option value="producing">Em produção</option><option value="ready">Prontas</option><option value="closed">Fechadas</option></select>
+    <div class="metrics" id="order-totals" aria-label="Totais das encomendas filtradas" aria-live="polite" hidden>
+      <div class="metric"><span>Valor das encomendas</span><strong data-total="total"></strong></div>
+      <div class="metric"><span>Já recebido</span><strong data-total="paid"></strong></div>
+      <div class="metric"><span>Por receber</span><strong data-total="outstanding"></strong></div>
+    </div>
+    <div id="sales-list"></div>
+  </section>
   <dialog id="payment-dialog">
     <h2>Registar pagamento</h2>
     <p id="payment-context"></p>
