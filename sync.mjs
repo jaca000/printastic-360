@@ -44,6 +44,7 @@ export function orderState(sale, lines) {
 function completeLine(line, product) {
   if (line.completed) return
   line.completed = true
+  line.fulfilled = roundQuantity((line.fulfilled ?? 0) + line.quantity)
   product.stock = Math.max(0, roundQuantity(product.stock - line.quantity))
 }
 
@@ -92,6 +93,39 @@ export function removeProduct(records, sku) {
   if (used) records.products[index].archived = true
   else records.products.splice(index, 1)
   return used
+}
+
+export function editOrder(records, change) {
+  const sale = records.sales?.find(item => item.kind === 'order' && item.reference === change.reference)
+  if (!sale || (sale.closedAt && paymentState(sale) === 'paid')) throw new Error('Esta encomenda está fechada e paga.')
+  if (!change.customer || !/^\d{4}-\d{2}-\d{2}$/.test(change.due) || !change.lines.length ||
+      !Number.isSafeInteger(change.delivery) || change.delivery < 0) throw new Error('Revê o cliente, o prazo, os produtos e os portes.')
+  const quantities = new Map()
+  const previous = records.orders.filter(line => line.reference === sale.reference)
+  for (const line of change.lines) {
+    const product = records.products.find(item => item.sku === line.sku)
+    const quantityValid = line.quantity > 0 && roundQuantity(line.quantity) === line.quantity &&
+      (product?.unit === 'meter' || Number.isInteger(line.quantity))
+    if (!product || (product.archived && !sale.lines.some(item => item.sku === line.sku)) ||
+        !quantityValid || !Number.isSafeInteger(line.price) || line.price < 0) throw new Error('Revê os produtos e os preços.')
+    quantities.set(line.sku, roundQuantity((quantities.get(line.sku) ?? 0) + line.quantity))
+  }
+  if (saleTotal(change) < paidTotal(sale)) throw new Error('O total da encomenda não pode ficar abaixo do valor já recebido.')
+  const fulfilled = new Map(Object.entries(sale.fulfilled ?? {}))
+  for (const row of previous) {
+    if (row.completed) fulfilled.set(row.sku, Math.max(fulfilled.get(row.sku) ?? 0, row.fulfilled ?? row.quantity))
+  }
+  const rows = [...quantities].map(([sku, total]) => {
+    const done = fulfilled.get(sku) ?? 0
+    const remaining = Math.max(0, roundQuantity(total - done))
+    return { reference: sale.reference, customer: change.customer, due: change.due, notes: change.notes,
+      sku, quantity: remaining, fulfilled: done, completed: remaining === 0 }
+  })
+  if (rows.some(row => !row.completed)) delete sale.readyAt
+  if (rows.some(row => !row.completed) && fulfilled.size && !sale.startedAt) sale.startedAt = new Date().toISOString()
+  Object.assign(sale, { customer: change.customer, customerInfo: change.customerInfo, due: change.due, notes: change.notes,
+    delivery: change.delivery, lines: change.lines, fulfilled: Object.fromEntries(fulfilled) })
+  records.orders = records.orders.filter(line => line.reference !== sale.reference).concat(rows)
 }
 
 if (typeof document !== 'undefined') start()
@@ -302,6 +336,11 @@ function start() {
       sale.payments.push({ amount: data.amount, method: data.method, date: data.date })
     } else if (path === '/sales' || path === '/convert') {
       saveSale(records, path, data)
+    } else if (path === '/edit-order') {
+      const previous = records.sales?.find(item => item.reference === data.reference)
+      const customerInfo = previous?.customer === data.customer ? previous.customerInfo :
+        records.clients?.find(item => item.name === data.customer)
+      editOrder(records, { ...data, customerInfo })
     } else if (path === '/move-delivery') {
       moveDelivery(records, data.reference)
     } else if (path === '/remove-product') {
@@ -445,6 +484,7 @@ function start() {
     return control
   }
 
+  let editingSale
   const salesForm = element('sales-form')
 
   function cents(value) {
@@ -460,7 +500,7 @@ function start() {
   }
 
   function saleQuantity(row) {
-    const product = catalogue.find(item => item.sku === row.querySelector('[name=sku]').value)
+    const product = (row.originalProduct?.sku === row.querySelector('[name=sku]').value ? row.originalProduct : undefined) ?? catalogue.find(item => item.sku === row.querySelector('[name=sku]').value)
     const input = Number(row.querySelector('[name=quantity]').value)
     return { quantity: product?.unit === 'meter' ? input / 100 : input, unit: product?.unit ?? 'piece' }
   }
@@ -519,7 +559,7 @@ function start() {
     }
   }
 
-  function addSaleLine() {
+  function addSaleLine(line) {
     const row = element('sales-line').content.firstElementChild.cloneNode(true)
     const select = row.querySelector('select')
     const price = row.querySelector('[name=price]')
@@ -533,6 +573,16 @@ function start() {
       price.value = item?.sell === '' || item?.sell == null ? '' : String(item.sell)
       salesTotal()
     }
+    if (line) {
+      row.originalProduct = { sku: line.sku, unit: line.unit }
+      if (!catalogue.some(item => item.sku === line.sku)) select.add(new Option(line.name, line.sku))
+      select.value = line.sku
+      select.onchange()
+      row.querySelector('[data-quantity-label]').textContent = line.unit === 'meter' ? 'Comprimento (cm)' : 'Quantidade'
+      row.querySelector('[data-price-label]').textContent = line.unit === 'meter' ? 'Preço por metro (€)' : 'Preço unitário (€)'
+      row.querySelector('[name=quantity]').value = line.unit === 'meter' ? Math.round(line.quantity * 100) : line.quantity
+      price.value = (line.price / 100).toFixed(2)
+    }
     row.querySelector('[data-remove]').onclick = () => {
       if (element('sales-lines').children.length === 1) return
       row.remove()
@@ -544,7 +594,10 @@ function start() {
 
   function resetSale(next) {
     const quote = next === 'quotes'
+    editingSale = undefined
     salesForm.reset()
+    salesForm.elements.reference.readOnly = false
+    element('cancel-order-edit').hidden = true
     element('sales-lines').replaceChildren()
     element('legacy-edit').hidden = true
     element('sale-editor').open = quote
@@ -555,6 +608,24 @@ function start() {
       crypto.randomUUID().slice(0, 6).toUpperCase()
     addSaleLine()
   }
+
+  function openOrderEditor(sale) {
+    resetSale('orders')
+    editingSale = sale
+    for (const name of ['reference', 'customer', 'due', 'notes'])
+      salesForm.elements[name].value = sale[name] ?? ''
+    salesForm.elements.reference.readOnly = true
+    salesForm.elements.delivery.value = sale.delivery ? (sale.delivery / 100).toFixed(2) : ''
+    element('sales-lines').replaceChildren()
+    sale.lines.forEach(addSaleLine)
+    element('sales-title').textContent = 'Editar encomenda ' + sale.reference
+    element('save-sales').textContent = 'Guardar alterações'
+    element('cancel-order-edit').hidden = false
+    element('sale-editor').open = true
+    salesForm.elements.customer.focus()
+  }
+
+  element('cancel-order-edit').onclick = () => resetSale('orders')
 
   let paymentReference
   const paymentForm = element('payment-form')
@@ -722,6 +793,8 @@ function start() {
         if (state !== 'closed' && paid < total) card.append(button('Registar pagamento', () => openPayment(sale)))
         if (state === 'ready' && payment === 'paid') card.append(orderAction(sale, 'Fechar encomenda', 'close', 'Encomenda fechada. Disponível no histórico e nos relatórios.'))
       }
+      if (!quote && !(sale.closedAt && paymentState(sale) === 'paid'))
+        card.append(button('Editar encomenda', () => openOrderEditor(sale)))
       card.append(details)
       card.append(button(quote ? 'Abrir orçamento' : 'Abrir nota de encomenda', () => {
         try { printSale(sale) } catch (error) { element('status').textContent = error.message }
@@ -737,7 +810,7 @@ function start() {
   }
 
   element('order-filter').onchange = () => renderSales('orders')
-  element('add-line').onclick = addSaleLine
+  element('add-line').onclick = () => addSaleLine()
   salesForm.addEventListener('input', salesTotal)
   salesForm.onsubmit = event => {
     event.preventDefault()
@@ -745,17 +818,17 @@ function start() {
       const form = salesForm.elements
       const lines = [...element('sales-lines').children].map(row => {
         const sku = row.querySelector('[name=sku]').value
-        return { sku, name: catalogue.find(item => item.sku === sku)?.name ?? sku,
+        return { sku, name: catalogue.find(item => item.sku === sku)?.name ?? editingSale?.lines.find(item => item.sku === sku)?.name ?? sku,
           ...saleQuantity(row),
           price: cents(row.querySelector('[name=price]').value) }
       })
-      await api('/sales', { kind: view === 'quotes' ? 'quote' : 'order',
+      await api(editingSale ? '/edit-order' : '/sales', { kind: view === 'quotes' ? 'quote' : 'order',
         reference: form.reference.value.trim(), customer: form.customer.value.trim(),
         due: form.due.value, notes: form.notes.value.trim(),
         delivery: cents(form.delivery.value.trim() || '0'), lines })
       await refresh()
       resetSale(view)
-    }, view === 'quotes' ? 'Orçamento guardado.' : 'Encomenda guardada e enviada para produção.')
+    }, editingSale ? 'Alterações guardadas.' : view === 'quotes' ? 'Orçamento guardado.' : 'Encomenda guardada e enviada para produção.')
   }
 
   const clientKey = value => value.trim().normalize('NFC').replace(/\s+/g, ' ').toLocaleLowerCase('pt')
