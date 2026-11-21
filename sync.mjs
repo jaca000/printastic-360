@@ -22,6 +22,46 @@ export function plan(products, orders) {
   return { queue, purchases: [...purchases.values()] }
 }
 
+const states = { pending: 'Pendente', producing: 'Em produção', ready: 'Pronta', closed: 'Fechada' }
+const saleTotal = sale => sale.lines.reduce((sum, line) => sum + lineAmount(line), 0)
+const paidTotal = sale => (sale.payments ?? []).reduce((sum, item) => sum + item.amount, 0)
+const paymentState = sale => paidTotal(sale) >= saleTotal(sale) ? 'paid' : paidTotal(sale) ? 'partial' : 'unpaid'
+const paymentLabels = { paid: 'Paga', partial: 'Pagamento parcial', unpaid: 'Por pagar' }
+
+export function orderState(sale, lines) {
+  if (sale.closedAt) return 'closed'
+  if (lines.length && lines.every(line => line.completed)) return 'ready'
+  return sale.startedAt || lines.some(line => line.completed) ? 'producing' : 'pending'
+}
+
+function completeLine(line, product) {
+  if (line.completed) return
+  line.completed = true
+  product.stock = Math.max(0, roundQuantity(product.stock - line.quantity))
+}
+
+export function advanceOrder(records, reference, action, timestamp) {
+  const sale = records.sales?.find(item => item.kind === 'order' && item.reference === reference)
+  if (!sale) throw new Error('Encomenda indisponível.')
+  const lines = records.orders.filter(item => item.reference === reference)
+  const state = orderState(sale, lines)
+  if (action === 'start' && state === 'pending') {
+    sale.startedAt = timestamp
+  } else if (action === 'ready' && (state === 'pending' || state === 'producing') && lines.length) {
+    for (const line of lines.filter(item => !item.completed)) {
+      const product = records.products.find(item => item.sku === line.sku)
+      if (!product) throw new Error('Um dos produtos já não está no catálogo.')
+      completeLine(line, product)
+    }
+    sale.readyAt = timestamp
+  } else if (action === 'close' && state === 'ready') {
+    if (paymentState(sale) !== 'paid') throw new Error('Regista o saldo em falta antes de fechar a encomenda.')
+    sale.closedAt = timestamp
+  } else {
+    throw new Error('A ação já não está disponível para esta encomenda.')
+  }
+}
+
 if (typeof document !== 'undefined') start()
 
 function start() {
@@ -49,6 +89,7 @@ function start() {
   let view
   let catalogue = []
   let savedSales = []
+  let productionLines = []
   let savedClients = []
 
   function selectView(next, reload = false) {
@@ -171,6 +212,7 @@ function start() {
       products: records.products,
       sales: records.sales ?? [],
       clients: records.clients ?? [],
+      productionLines: records.orders,
       orders: records.orders.filter(order => !order.completed).sort((a, b) =>
         a.due.localeCompare(b.due) || a.reference.localeCompare(b.reference) || a.sku.localeCompare(b.sku))
     }
@@ -208,10 +250,12 @@ function start() {
       const index = records.clients.findIndex(item => item.id === data.id)
       if (index < 0) records.clients.push({ ...data, id: crypto.randomUUID() })
       else records.clients[index] = data
+    } else if (path === '/order-state') {
+      advanceOrder(records, data.reference, data.action, new Date().toISOString())
     } else if (path === '/payment') {
       const sale = (records.sales ?? []).find(item => item.reference === data.reference && item.kind === 'order')
       const method = ['MB WAY', 'Transferência', 'Numerário'].includes(data.method)
-      if (!sale || !method || !Number.isSafeInteger(data.amount) || data.amount <= 0 ||
+      if (!sale || sale.closedAt || !method || !Number.isSafeInteger(data.amount) || data.amount <= 0 ||
           !/^\d{4}-\d{2}-\d{2}$/.test(data.date)) throw new Error('Revê os dados do pagamento.')
       sale.payments ??= []
       const outstanding = saleTotal(sale) - sale.payments.reduce((sum, item) => sum + item.amount, 0)
@@ -249,10 +293,7 @@ function start() {
       const index = records.orders.findIndex(item => item.reference === data.reference && item.sku === data.sku)
       const previous = records.orders[index]
       if (path === '/close') {
-        if (previous && !previous.completed) {
-          previous.completed = true
-          product.stock = Math.max(0, roundQuantity(product.stock - previous.quantity))
-        }
+        if (previous) completeLine(previous, product)
       } else {
         if (!validQuantity(data.quantity, product.unit)) throw new Error('Indica a quantidade na unidade de venda.')
         if (!data.customer) throw new Error('Indica o cliente.')
@@ -285,6 +326,7 @@ function start() {
     element('workspace').hidden = true
     catalogue = []
     savedSales = []
+    productionLines = []
     savedClients = []
     clearProductLookup()
     element('client-form').reset()
@@ -405,7 +447,7 @@ function start() {
       records.sales.push(source)
       return
     }
-    records.sales.push({ ...source, reference, kind: 'order', converted: false })
+    records.sales.push({ ...source, reference, kind: 'order', converted: false, createdAt: today() })
     for (const [sku, quantity] of quantities) {
       records.orders.push({ reference, customer: source.customer, due: source.due,
         notes: source.notes, sku, quantity })
@@ -452,6 +494,7 @@ function start() {
     salesForm.reset()
     element('sales-lines').replaceChildren()
     element('legacy-edit').hidden = true
+    element('sale-editor').open = quote
     element('sales-title').textContent = quote ? 'Novo orçamento' : 'Nova encomenda'
     element('sales-list-title').textContent = quote ? 'Orçamentos registados' : 'Encomendas registadas'
     element('save-sales').textContent = quote ? 'Guardar orçamento' : 'Guardar encomenda'
@@ -462,12 +505,13 @@ function start() {
 
   let paymentReference
   const paymentForm = element('payment-form')
-  const saleTotal = sale => sale.lines.reduce((sum, line) => sum + lineAmount(line), 0)
 
   function openPayment(sale) {
     paymentReference = sale.reference
     paymentForm.reset()
     paymentForm.elements.date.value = today()
+    paymentForm.elements.amount.value = ((saleTotal(sale) - paidTotal(sale)) / 100).toFixed(2).replace('.', ',')
+    element('payment-context').textContent = sale.reference + ' · Saldo por pagar ' + money.format((saleTotal(sale) - paidTotal(sale)) / 100)
     element('payment-dialog').showModal()
   }
 
@@ -525,26 +569,57 @@ function start() {
     logo.src = new URL('./logo-printastic-al.png', location.href).href
   }
 
+  const currentOrderState = sale => orderState(sale, productionLines.filter(line => line.reference === sale.reference))
+
+  function badge(label, state) {
+    const item = node('span', label)
+    item.className = 'order-badge ' + state
+    return item
+  }
+
+  function orderAction(sale, label, action, message) {
+    return button(label, () => run(async () => {
+      await api('/order-state', { reference: sale.reference, action })
+      await refresh()
+    }, message))
+  }
+
   function renderSales(next) {
     if (next !== 'quotes' && next !== 'orders') return
     const quote = next === 'quotes'
     const clients = new Set([...savedClients.map(client => client.name), ...savedSales.map(sale => sale.customer)])
     element('clients').replaceChildren(...[...clients].sort().map(client => new Option(client)))
-    const sales = savedSales.filter(sale => sale.kind === (quote ? 'quote' : 'order')).reverse()
+    element('order-filter').hidden = quote
+    const filter = element('order-filter').value
+    const sales = savedSales.filter(sale => sale.kind === (quote ? 'quote' : 'order') &&
+      (quote || filter === 'all' || (filter === 'active' ? !sale.closedAt : currentOrderState(sale) === filter))).reverse()
     list('sales-list', sales, quote ? 'Ainda não há orçamentos.' : 'Ainda não há encomendas registadas neste ecrã.', sale => {
       const card = node('article', '')
       const total = saleTotal(sale)
       card.append(node('strong', sale.reference + ' · ' + sale.customer),
         node('p', 'Prazo ' + dateLabel.format(new Date(sale.due)) + ' · ' + money.format(total / 100)))
-      for (const line of sale.lines) card.append(node('p', formatQuantity(line.quantity, line.unit) + ' × ' + line.name))
+      const details = node('details', '')
+      details.append(node('summary', 'Produtos e histórico'))
+      for (const line of sale.lines) details.append(node('p', formatQuantity(line.quantity, line.unit) + ' × ' + line.name))
+      if (sale.notes) details.append(node('p', sale.notes))
       if (!quote) {
-        const paid = (sale.payments ?? []).reduce((sum, item) => sum + item.amount, 0)
-        card.append(node('p', 'Pago ' + money.format(paid / 100) + ' · Por pagar ' + money.format((total - paid) / 100)))
-        for (const payment of sale.payments ?? []) {
-          card.append(node('p', payment.date + ' · ' + payment.method + ' · ' + money.format(payment.amount / 100)))
+        const paid = paidTotal(sale)
+        const state = currentOrderState(sale)
+        const payment = paymentState(sale)
+        const badges = node('div', '')
+        badges.className = 'order-badges'
+        badges.append(badge(states[state], state), badge(paymentLabels[payment], payment))
+        card.append(badges, node('p', 'Pago ' + money.format(paid / 100) + ' · Por pagar ' + money.format((total - paid) / 100)))
+        for (const item of sale.payments ?? []) {
+          details.append(node('p', item.date + ' · ' + item.method + ' · ' + money.format(item.amount / 100)))
         }
-        if (paid < total) card.append(button('Registar pagamento', () => openPayment(sale)))
+        if (sale.closedAt) details.append(node('p', 'Fechada em ' + dateLabel.format(new Date(sale.closedAt))))
+        if (state === 'pending') card.append(orderAction(sale, 'Iniciar produção', 'start', 'Encomenda em produção.'))
+        if (state === 'pending' || state === 'producing') card.append(orderAction(sale, 'Marcar como pronta', 'ready', 'Encomenda pronta. Stock atualizado.'))
+        if (state !== 'closed' && paid < total) card.append(button('Registar pagamento', () => openPayment(sale)))
+        if (state === 'ready' && payment === 'paid') card.append(orderAction(sale, 'Fechar encomenda', 'close', 'Encomenda fechada. Disponível no histórico e nos relatórios.'))
       }
+      card.append(details)
       card.append(button(quote ? 'Abrir orçamento' : 'Abrir nota de encomenda', () => {
         try { printSale(sale) } catch (error) { element('status').textContent = error.message }
       }))
@@ -558,6 +633,7 @@ function start() {
     })
   }
 
+  element('order-filter').onchange = () => renderSales('orders')
   element('add-line').onclick = addSaleLine
   salesForm.addEventListener('input', salesTotal)
   salesForm.onsubmit = event => {
@@ -685,7 +761,10 @@ function start() {
   function reportRows() {
     const form = element('report-filter').elements
     return savedSales.filter(sale => sale.kind === 'order' &&
-      (!form.from.value || sale.due >= form.from.value) && (!form.to.value || sale.due <= form.to.value))
+      (!form.from.value || sale.due >= form.from.value) && (!form.to.value || sale.due <= form.to.value) &&
+      (!form.state.value || currentOrderState(sale) === form.state.value) &&
+      (!form.payment.value || paymentState(sale) === form.payment.value) &&
+      sale.customer.toLocaleLowerCase('pt').includes(form.customer.value.trim().toLocaleLowerCase('pt')))
       .map(sale => {
         const total = saleTotal(sale)
         const paid = (sale.payments ?? []).reduce((sum, item) => sum + item.amount, 0)
@@ -707,10 +786,11 @@ function start() {
       item.append(node('span', label), node('strong', value))
       return item
     }))
-    list('report-list', rows, 'Nenhuma encomenda no período selecionado.', ({ sale, outstanding }) => {
+    list('report-list', rows, 'Nenhuma encomenda no período selecionado.', ({ sale, total, paid, outstanding }) => {
       const item = node('article', '')
       item.append(node('strong', sale.reference + ' · ' + sale.customer),
-        node('p', sale.due + ' · Por receber ' + money.format(outstanding / 100)))
+        node('p', sale.due + ' · ' + states[currentOrderState(sale)] + ' · ' + paymentLabels[paymentState(sale)]),
+        node('p', 'Total ' + money.format(total / 100) + ' · Recebido ' + money.format(paid / 100) + ' · Por receber ' + money.format(outstanding / 100)))
       return item
     })
   }
@@ -722,9 +802,9 @@ function start() {
       const string = String(value)
       return '"' + (/^\s*[=+@-]/.test(string) ? "'" : '') + string.replaceAll('"', '""') + '"'
     }
-    const table = [['Referência', 'Cliente', 'Prazo', 'Total (€)', 'Pago (€)', 'Saldo (€)']]
+    const table = [['Referência', 'Cliente', 'Prazo', 'Estado', 'Pagamento', 'Total (€)', 'Pago (€)', 'Saldo (€)']]
     for (const { sale, total, paid, outstanding } of reportRows())
-      table.push([sale.reference, sale.customer, sale.due, ...[total, paid, outstanding].map(value => (value / 100).toFixed(2).replace('.', ','))])
+      table.push([sale.reference, sale.customer, sale.due, states[currentOrderState(sale)], paymentLabels[paymentState(sale)], ...[total, paid, outstanding].map(value => (value / 100).toFixed(2).replace('.', ','))])
     const csv = '\uFEFF' + table.map(row => row.map(cell).join(';')).join('\r\n')
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
     const link = node('a', '')
@@ -735,7 +815,8 @@ function start() {
   }
 
   async function refresh() {
-    const { products, orders, sales, clients } = await api()
+    const { products, orders, sales, clients, productionLines: lines } = await api()
+    productionLines = lines
     catalogue = products
     savedSales = sales
     savedClients = clients
