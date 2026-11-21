@@ -23,7 +23,7 @@ export function plan(products, orders) {
 }
 
 const states = { pending: 'Pendente', producing: 'Em produção', ready: 'Pronta', closed: 'Fechada' }
-const saleTotal = sale => sale.lines.reduce((sum, line) => sum + lineAmount(line), 0)
+const saleTotal = sale => sale.lines.reduce((sum, line) => sum + lineAmount(line), sale.delivery ?? 0)
 const paidTotal = sale => (sale.payments ?? []).reduce((sum, item) => sum + item.amount, 0)
 export function orderTotals(orders) {
   const { total, paid } = orders.reduce((sum, sale) => ({
@@ -67,6 +67,31 @@ export function advanceOrder(records, reference, action, timestamp) {
   } else {
     throw new Error('A ação já não está disponível para esta encomenda.')
   }
+}
+
+const isDeliveryLine = line => /^portes(?: de envio)?$/i.test(line.name.trim())
+
+export function moveDelivery(records, reference) {
+  const sale = records.sales?.find(item => item.reference === reference && item.kind === 'order')
+  if (!sale || sale.closedAt) throw new Error('Encomenda indisponível para alterar os portes.')
+  const delivery = sale.lines.filter(isDeliveryLine)
+  const remaining = sale.lines.filter(line => !isDeliveryLine(line))
+  if (!delivery.length || !remaining.length) throw new Error('A encomenda precisa de ter pelo menos um produto.')
+  const skus = new Set(delivery.map(line => line.sku))
+  if (remaining.some(line => skus.has(line.sku))) throw new Error('A mesma referência está usada como produto e como portes.')
+  sale.delivery = delivery.reduce((sum, line) => sum + lineAmount(line), sale.delivery ?? 0)
+  sale.lines = remaining
+  records.orders = records.orders.filter(line => line.reference !== reference || !skus.has(line.sku) || line.completed)
+}
+
+export function removeProduct(records, sku) {
+  const index = records.products.findIndex(item => item.sku === sku)
+  if (index < 0) throw new Error('Produto indisponível.')
+  const used = records.orders.some(item => item.sku === sku) ||
+    records.sales?.some(sale => sale.lines.some(line => line.sku === sku))
+  if (used) records.products[index].archived = true
+  else records.products.splice(index, 1)
+  return used
 }
 
 if (typeof document !== 'undefined') start()
@@ -277,6 +302,16 @@ function start() {
       sale.payments.push({ amount: data.amount, method: data.method, date: data.date })
     } else if (path === '/sales' || path === '/convert') {
       saveSale(records, path, data)
+    } else if (path === '/move-delivery') {
+      moveDelivery(records, data.reference)
+    } else if (path === '/remove-product') {
+      const archived = removeProduct(records, data.sku)
+      await saveVault(vaultSession, records)
+      return { archived }
+    } else if (path === '/restore-product') {
+      const product = records.products.find(item => item.sku === data.sku)
+      if (!product?.archived) throw new Error('Produto indisponível.')
+      delete product.archived
     } else if (path === '/products') {
       if (!data.sku || !data.name || !data.supplier)
         throw new Error('Preenche a referência, o nome e o fornecedor.')
@@ -298,6 +333,7 @@ function start() {
         throw new Error('Este produto já tem registos. Cria uma nova referência para mudar a unidade de venda.')
       data.photo ??= records.products[index]?.photo
       if (data.photoUrl === '') data.photoUrl = records.products[index]?.photoUrl
+      if (records.products[index]?.archived) data.archived = true
       if (data.photo) delete data.photoUrl
       if (index < 0) records.products.push(data)
       else records.products[index] = data
@@ -310,6 +346,7 @@ function start() {
         if (previous) completeLine(previous, product)
       } else {
         if (!validQuantity(data.quantity, product.unit)) throw new Error('Indica a quantidade na unidade de venda.')
+        if (product.archived && !previous) throw new Error('Seleciona um produto ativo.')
         if (!data.customer) throw new Error('Indica o cliente.')
         if (previous?.completed) throw new Error('Esta linha já está concluída.')
         if (index < 0) records.orders.push(data)
@@ -445,10 +482,12 @@ function start() {
     const source = quote ?? { ...data, customerInfo }
     if (!source.reference || !source.customer || !/^\d{4}-\d{2}-\d{2}$/.test(source.due) || !source.lines.length)
       throw new Error('Preenche a referência, o cliente, o prazo e pelo menos um produto.')
+    const delivery = source.delivery ?? 0
+    if (!Number.isSafeInteger(delivery) || delivery < 0) throw new Error('Indica um valor de portes válido.')
     const quantities = new Map()
     for (const line of source.lines) {
       const product = records.products.find(product => product.sku === line.sku)
-      if (!product || !validQuantity(line.quantity, product.unit) ||
+      if (!product || (product.archived && !quote) || !validQuantity(line.quantity, product.unit) ||
           !Number.isSafeInteger(line.price) || line.price < 0)
         throw new Error('Revê os produtos, as quantidades e os preços.')
       quantities.set(line.sku, roundQuantity((quantities.get(line.sku) ?? 0) + line.quantity))
@@ -473,7 +512,7 @@ function start() {
     try {
       const total = [...element('sales-lines').children].reduce((sum, row) => {
         return sum + lineAmount({ ...saleQuantity(row), price: cents(row.querySelector('[name=price]').value) })
-      }, 0)
+      }, cents(salesForm.elements.delivery.value.trim() || '0'))
       element('sales-total').textContent = 'Total ' + money.format(total / 100)
     } catch {
       element('sales-total').textContent = 'Total —'
@@ -575,6 +614,7 @@ function start() {
       for (const value of [line.name, formatQuantity(line.quantity, line.unit), money.format(line.price / 100) + (line.unit === "meter" ? "/m" : ""), money.format(lineAmount(line) / 100)])
         add(row, 'td', value)
     }
+    if (sale.delivery) add(doc.body, 'p', 'Portes de envio · ' + money.format(sale.delivery / 100))
     add(doc.body, 'h2', 'Total · ' + money.format(saleTotal(sale) / 100))
     if (sale.notes) add(doc.body, 'p', sale.notes)
     add(doc.body, 'p', 'Documento comercial sem valor de fatura.')
@@ -623,6 +663,13 @@ function start() {
       const details = node('details', '')
       details.append(node('summary', 'Produtos e histórico'))
       for (const line of sale.lines) details.append(node('p', formatQuantity(line.quantity, line.unit) + ' × ' + line.name))
+      if (sale.delivery) details.append(node('p', 'Portes de envio · ' + money.format(sale.delivery / 100)))
+      if (!quote && !sale.closedAt && sale.lines.some(isDeliveryLine) && sale.lines.some(line => !isDeliveryLine(line))) {
+        details.append(button('Mover linha de portes para Portes de envio', () => run(async () => {
+          await api('/move-delivery', { reference: sale.reference })
+          await refresh()
+        }, 'Portes separados. O total da encomenda foi mantido.')))
+      }
       if (sale.notes) details.append(node('p', sale.notes))
       if (!quote) {
         const paid = paidTotal(sale)
@@ -704,7 +751,8 @@ function start() {
       })
       await api('/sales', { kind: view === 'quotes' ? 'quote' : 'order',
         reference: form.reference.value.trim(), customer: form.customer.value.trim(),
-        due: form.due.value, notes: form.notes.value.trim(), lines })
+        due: form.due.value, notes: form.notes.value.trim(),
+        delivery: cents(form.delivery.value.trim() || '0'), lines })
       await refresh()
       resetSale(view)
     }, view === 'quotes' ? 'Orçamento guardado.' : 'Encomenda guardada e enviada para produção.')
@@ -874,7 +922,7 @@ function start() {
   async function refresh() {
     const { products, orders, sales, clients, productionLines: lines } = await api()
     productionLines = lines
-    catalogue = products
+    catalogue = products.filter(product => !product.archived)
     savedSales = sales
     savedClients = clients
     if (view === 'clients') renderClients()
@@ -893,7 +941,7 @@ function start() {
     element('metric-cost').textContent = money.format(totalCost)
     const select = element('order').elements.sku
     const selected = select.value
-    select.replaceChildren(...products.map(product => new Option(product.name, product.sku)))
+    select.replaceChildren(...products.filter(product => !product.archived || product.sku === selected).map(product => new Option(product.name, product.sku)))
     if (products.some(product => product.sku === selected)) select.value = selected
 
     list('queue', queue, 'Sem trabalho pendente.', order => {
@@ -908,6 +956,8 @@ function start() {
       card.append(button('Editar', () => {
           selectView('orders')
           element('legacy-edit').hidden = false
+          if (order.product.archived && ![...select.options].some(option => option.value === order.sku))
+            select.add(new Option(order.product.name, order.sku))
           edit('order', order)
         }), ' ',
         button('Concluir', () => run(async () => {
@@ -950,6 +1000,24 @@ function start() {
           else sessionStorage.removeItem('printastic360-mockup-photo')
           selectView('studio', true)
         }))
+      if (product.archived) {
+        card.append(badge('Arquivado', 'closed'), button('Reativar', () => run(async () => {
+          await api('/restore-product', { sku: product.sku })
+          await refresh()
+        }, 'Produto reativado.')))
+      } else {
+        const used = productionLines.some(line => line.sku === product.sku) ||
+          savedSales.some(sale => sale.lines.some(line => line.sku === product.sku))
+        card.append(button(used ? 'Arquivar produto' : 'Eliminar produto', () => {
+          if (!window.confirm(used ? 'Arquivar este produto? Os registos existentes serão mantidos.'
+            : 'Eliminar definitivamente este produto do catálogo?')) return
+          run(async () => {
+            const { archived } = await api('/remove-product', { sku: product.sku })
+            await refresh()
+            return archived ? 'Produto arquivado.' : 'Produto eliminado.'
+          })
+        }))
+      }
       return card
     })
   }
@@ -959,8 +1027,8 @@ function start() {
     busy = true
     element('status').textContent = 'A processar…'
     try {
-      await task()
-      element('status').textContent = success
+      const message = await task()
+      element('status').textContent = success ?? message ?? ''
     } catch (error) {
       element('status').textContent = error.message
     } finally {
