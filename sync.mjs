@@ -657,41 +657,91 @@ function start() {
     printWindow.opener = null
     const doc = printWindow.document
     doc.title = 'Printastic 360 · ' + sale.reference
+    doc.documentElement.lang = 'pt-PT'
     const style = doc.createElement('style')
-    style.textContent = 'body{font:16px system-ui;color:#182747;margin:45px}header{background:#11489e;padding:22px;border-radius:12px}img{width:140px}table{border-collapse:collapse;width:100%;margin:22px 0}td,th{padding:10px;border-bottom:1px solid #bfd2eb;text-align:left}@media print{header{print-color-adjust:exact}}'
+    style.textContent = `
+      :root{color:#182747;font:15px system-ui,sans-serif}
+      *{box-sizing:border-box}
+      body{max-width:820px;margin:32px auto;padding:0 28px}
+      p,h1,h2{margin:0}
+      header{display:flex;align-items:center;justify-content:space-between;gap:24px;
+        border-bottom:4px solid #bc4387;padding-bottom:18px}
+      .brand{display:grid;place-items:center;width:122px;min-width:102px;padding:12px;
+        background:#11489e;border-radius:12px;print-color-adjust:exact}
+      .brand img{display:block;width:100%;height:auto}
+      .identity{text-align:right;min-width:0}
+      h1{font-size:clamp(1.35rem,4vw,2rem);letter-spacing:-.035em;line-height:1.15}
+      .reference{font-size:.85rem;font-weight:650;color:#52617a;overflow-wrap:anywhere;margin-top:6px}
+      .customer{margin:24px 0;line-height:1.55;overflow-wrap:anywhere}
+      .customer h2{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:#52617a}
+      .customer p:first-of-type{font-size:1.1rem;font-weight:700}
+      table{border-collapse:collapse;width:100%}
+      th,td{padding:10px 8px;border-bottom:1px solid #d6e1ef;text-align:left}
+      th{font-size:.78rem;background:#edf4ff;color:#164580;print-color-adjust:exact}
+      th:not(:first-child),td:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}
+      td:not(:first-child){white-space:nowrap}
+      td:first-child{overflow-wrap:anywhere}
+      tr{break-inside:avoid}
+      .amounts{margin:18px 0 0 auto;width:min(100%,285px);break-inside:avoid}
+      .amount-row{display:flex;justify-content:space-between;gap:14px;padding:7px 0}
+      .grand{border-top:2px solid #164580;margin-top:5px;padding-top:10px;font-size:1.3rem;font-weight:750}
+      footer{margin-top:32px;border-top:1px solid #d6e1ef;padding-top:10px;color:#52617a;font-size:.8rem}
+      button{font:inherit;font-weight:700;background:#11489e;color:white;border:0;border-radius:8px;padding:10px 14px;margin-top:20px;cursor:pointer}
+      @page{size:A4;margin:14mm}
+      @media print{body{margin:0;padding:0;max-width:none}button{display:none}}
+      @media screen and (max-width:460px){body{padding:0 14px}header{gap:12px}th,td{padding:8px 4px}table{font-size:.85rem}}
+    `
     doc.head.append(style)
-    const add = (root, tag, value) => {
+    const add = (root, tag, value = '', className) => {
       const item = doc.createElement(tag)
       item.textContent = value
+      if (className) item.className = className
       root.append(item)
       return item
     }
-    const header = add(doc.body, 'header', '')
-    const logo = add(header, 'img', '')
+    const header = add(doc.body, 'header')
+    const logo = add(add(header, 'div', '', 'brand'), 'img')
     logo.alt = 'Printastic_AL'
-    const title = sale.kind === 'quote' ? 'Orçamento' : 'Nota de encomenda'
-    add(doc.body, 'h1', title + ' · ' + sale.reference)
-    add(doc.body, 'p', 'Cliente · ' + sale.customer)
-    const customer = sale.customerInfo
-    if (customer?.tax) add(doc.body, 'p', 'NIF · ' + customer.tax)
-    if (customer?.address) add(doc.body, 'p', customer.address)
-    if (customer?.email || customer?.phone) add(doc.body, 'p', [customer.email, customer.phone].filter(Boolean).join(' · '))
-    add(doc.body, 'p', 'Prazo · ' + dateLabel.format(new Date(sale.due)))
-    const table = add(doc.body, 'table', '')
-    const headings = add(table, 'tr', '')
-    for (const value of ['Produto', 'Quantidade', 'Preço unitário', 'Total']) add(headings, 'th', value)
-    for (const line of sale.lines) {
-      const row = add(table, 'tr', '')
-      for (const value of [line.name, formatQuantity(line.quantity, line.unit), money.format(line.price / 100) + (line.unit === "meter" ? "/m" : ""), money.format(lineAmount(line) / 100)])
-        add(row, 'td', value)
-    }
-    if (sale.delivery) add(doc.body, 'p', 'Portes de envio · ' + money.format(sale.delivery / 100))
-    add(doc.body, 'h2', 'Total · ' + money.format(saleTotal(sale) / 100))
-    if (sale.notes) add(doc.body, 'p', sale.notes)
-    add(doc.body, 'p', 'Documento comercial sem valor de fatura.')
-    const print = add(doc.body, 'button', 'Imprimir ou guardar em PDF')
-    print.onclick = () => { print.hidden = true; printWindow.print(); print.hidden = false }
     logo.src = new URL('./logo-printastic-al.png', location.href).href
+    const identity = add(header, 'div', '', 'identity')
+    add(identity, 'h1', sale.kind === 'quote' ? 'Orçamento' : 'Nota de encomenda')
+    add(identity, 'p', sale.reference, 'reference')
+    const customerBlock = add(doc.body, 'section', '', 'customer')
+    add(customerBlock, 'h2', 'Cliente')
+    add(customerBlock, 'p', sale.customer)
+    const customer = sale.customerInfo
+    if (customer?.tax) add(customerBlock, 'p', 'NIF ' + customer.tax)
+    if (customer?.address) add(customerBlock, 'p', customer.address)
+    if (customer?.email || customer?.phone)
+      add(customerBlock, 'p', [customer.email, customer.phone].filter(Boolean).join(' · '))
+
+    const table = add(doc.body, 'table')
+    const headings = add(add(table, 'thead'), 'tr')
+    for (const value of ['Produto', 'Quantidade', 'Preço unitário', 'Total'])
+      add(headings, 'th', value).scope = 'col'
+    const rows = add(table, 'tbody')
+    for (const line of sale.lines) {
+      const row = add(rows, 'tr')
+      const unitPrice = money.format(line.price / 100) + (line.unit === 'meter' ? '/m' : '')
+      for (const value of [line.name, formatQuantity(line.quantity, line.unit), unitPrice,
+        money.format(lineAmount(line) / 100)]) add(row, 'td', value)
+    }
+
+    const amounts = add(doc.body, 'section', '', 'amounts')
+    const total = saleTotal(sale)
+    const amountRow = (label, cents, grand = false) => {
+      const row = add(amounts, 'p', '', grand ? 'amount-row grand' : 'amount-row')
+      add(row, 'span', label)
+      add(row, 'strong', money.format(cents / 100))
+    }
+    if (sale.delivery) {
+      amountRow('Subtotal', total - sale.delivery)
+      amountRow('Portes de envio', sale.delivery)
+    }
+    amountRow('Total', total, true)
+    add(doc.body, 'footer', 'Documento comercial sem valor de fatura.')
+    const print = add(doc.body, 'button', 'Imprimir ou guardar em PDF')
+    print.onclick = () => printWindow.print()
   }
 
   const currentOrderState = sale => orderState(sale, productionLines.filter(line => line.reference === sale.reference))
