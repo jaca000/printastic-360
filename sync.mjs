@@ -174,6 +174,7 @@ function start() {
   let catalogue = []
   let productsForProfit = []
   let savedSales = []
+  let savedOrderHistory = []
   let productionLines = []
   let savedClients = []
 
@@ -296,6 +297,7 @@ function start() {
     if (!data) return {
       products: records.products,
       sales: records.sales ?? [],
+      orderHistory: records.orderHistory ?? [],
       clients: records.clients ?? [],
       productionLines: records.orders,
       orders: records.orders.filter(order => !order.completed).sort((a, b) =>
@@ -304,7 +306,13 @@ function start() {
     for (const key of ['sku', 'name', 'supplier', 'reference', 'customer', 'notes']) {
       if (typeof data[key] === 'string') data[key] = data[key].trim()
     }
-    if (path === '/import-clients') {
+    if (path === '/commercial-followup') {
+      const client = records.clients?.find(item => item.id === data.id)
+      if (!client || !commercialStates.includes(data.state) || !validDay(data.next) ||
+          data.next <= today()) throw new Error('Escolhe uma data futura para o seguimento.')
+      client.commercial ??= []
+      client.commercial.push({ key: data.key, state: data.state, next: data.next, date: today() })
+    } else if (path === '/import-clients') {
       records.clients ??= []
       const existing = new Set(records.clients.map(item => clientKey(item.name)))
       let imported = 0
@@ -334,7 +342,7 @@ function start() {
       if (duplicate) throw new Error('Já existe uma ficha com este nome.')
       const index = records.clients.findIndex(item => item.id === data.id)
       if (index < 0) records.clients.push({ ...data, id: crypto.randomUUID() })
-      else records.clients[index] = data
+      else records.clients[index] = { ...records.clients[index], ...data }
     } else if (path === '/order-state') {
       advanceOrder(records, data.reference, data.action, new Date().toISOString())
     } else if (path === '/invoice-status') {
@@ -436,6 +444,7 @@ function start() {
     catalogue = []
     productsForProfit = []
     savedSales = []
+    savedOrderHistory = []
     productionLines = []
     savedClients = []
     clearProductLookup()
@@ -916,7 +925,7 @@ function start() {
   const clientKey = value => value.trim().normalize('NFC').replace(/\s+/g, ' ').toLocaleLowerCase('pt')
   const importForm = element('odoo-form')
 
-  function parseOdooCsv(text) {
+  function readCsvRows(text) {
     text = text.replace(/^\uFEFF/, '')
     const header = text.split(/\r?\n/, 1)[0]
     const delimiter = header.split(';').length > header.split(',').length ? ';' : ','
@@ -942,6 +951,11 @@ function start() {
         }
       } else cell += char
     }
+    return rows
+  }
+
+  function parseOdooCsv(text) {
+    const rows = readCsvRows(text)
     const columns = rows.shift()?.map(value => value.trim().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()) ?? []
     const column = names => columns.findIndex(name => names.includes(name))
     const name = column(['nome', 'nome exibido', 'name', 'display name'])
@@ -985,6 +999,8 @@ function start() {
   function renderClients() {
     list('client-list', [...savedClients].sort((a, b) => a.name.localeCompare(b.name, 'pt')), 'Ainda não há clientes.', client => {
       const card = node('article', '')
+      card.tabIndex = -1
+      card.dataset.clientId = String(client.id)
       card.append(node('strong', client.name))
       for (const value of [client.email, client.phone, client.tax && 'NIF ' + client.tax, client.address])
         if (value) card.append(node('p', value))
@@ -1105,19 +1121,134 @@ function start() {
     }))
   }
 
+  const customerAlertDays = element('customer-alert-days')
+  const customerAlertSetting = 'printastic360-customer-alert-days'
+  const savedAlertDays = localStorage.getItem(customerAlertSetting)
+  if ([...customerAlertDays.options].some(option => option.value === savedAlertDays))
+    customerAlertDays.value = savedAlertDays
+  customerAlertDays.onchange = () => {
+    localStorage.setItem(customerAlertSetting, customerAlertDays.value)
+    renderCustomerAlerts(today())
+  }
+
+  const commercialStates = ['Contactado', 'Adiado', 'Orçamento enviado', 'Encomenda ganha']
+  const dayMs = 86400000
+  const validDay = value => /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+    Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value
+  const addDays = (date, days) => new Date(Date.parse(date) + days * dayMs).toISOString().slice(0, 10)
+
+  function renderCustomerAlerts(currentDate) {
+    const byClient = new Map()
+    const sales = new Map([...savedOrderHistory, ...savedSales.filter(sale => sale.kind === 'order')]
+      .map(sale => [clientKey(sale.reference), sale]))
+    const idsByName = new Map(savedClients.map(client => [clientKey(client.name), client.id]))
+    for (const sale of sales.values()) {
+      const date = String(sale.createdAt ?? '').slice(0, 10)
+      if (!validDay(date) || date > currentDate) continue
+      const id = sale.customerInfo?.id || idsByName.get(clientKey(sale.customer))
+      if (!id) continue
+      if (!byClient.has(id)) byClient.set(id, [])
+      byClient.get(id).push({ sale, date })
+    }
+
+    const alerts = []
+    for (const client of savedClients) {
+      const history = (byClient.get(client.id) ?? []).sort((a, b) => b.date.localeCompare(a.date))
+      if (!history.length) continue
+      const latest = history[0]
+      const dates = [...new Set(history.map(order => order.date))]
+      const gaps = dates.slice(1).map((date, i) => (Date.parse(dates[i]) - Date.parse(date)) / dayMs)
+        .sort((a, b) => a - b)
+      const middle = Math.floor(gaps.length / 2)
+      const interval = gaps.length >= 2 ? Math.round((gaps[middle] + gaps[Math.floor((gaps.length - 1) / 2)]) / 2) : 0
+      const predictable = interval >= 14 && gaps.at(-1) <= gaps[0] * 2
+      const typical = predictable ? interval : Number(customerAlertDays.value)
+      const lead = predictable ? Math.min(30, Math.ceil(typical / 4)) : 0
+      const days = (Date.parse(currentDate) - Date.parse(latest.date)) / dayMs
+      const key = latest.sale.reference
+      const followups = (client.commercial ?? []).filter(item => item.key === key)
+      const lastFollowup = followups.at(-1)
+      if (lastFollowup?.next > currentDate || (!lastFollowup && days < typical - lead)) continue
+      const score = days - typical + (lastFollowup ? 1000 : 0)
+      alerts.push({ client, history, latest, days, typical, predictable, key, followups, score })
+    }
+    alerts.sort((a, b) => b.score - a.score || a.client.name.localeCompare(b.client.name, 'pt'))
+    element('customer-alert-summary').textContent = 'Inteligência Comercial · ' + alerts.length + ' clientes a contactar'
+    list('customer-alert-list', alerts.slice(0, 5), 'Sem contactos sugeridos para hoje.', alert => {
+      const { client, history, latest, days, typical, predictable, key, followups } = alert
+      const card = node('article', '')
+      const description = predictable
+        ? 'Compras a cada ~' + typical + ' dias. Próxima compra estimada para ' + dateLabel.format(new Date(addDays(latest.date, typical))) + '.'
+        : 'Prazo de seguimento configurado: ' + typical + ' dias.'
+      const items = (latest.sale.lines ?? []).filter(line => !isDeliveryLine(line)).slice(0, 3).map(line => line.name)
+      card.append(node('strong', client.name),
+        node('p', 'Última compra há ' + days + ' dias · ' + history.length + ' encomendas conhecidas. ' + description))
+      if (items.length) card.append(node('p', 'Últimos artigos: ' + items.join(', ')))
+      const details = node('details', '')
+      details.append(node('summary', 'Histórico e seguimento'))
+      for (const { sale, date } of history.slice(0, 8))
+        details.append(node('p', sale.reference + ' · ' + dateLabel.format(new Date(date))))
+      for (const item of followups.slice(-4))
+        details.append(node('p', item.date + ' · ' + item.state + ' · Seguimento em ' + item.next))
+      const label = node('label', 'Mensagem editável')
+      const draft = node('textarea', '')
+      draft.rows = 3
+      draft.value = 'Olá, falo da Printastic. ' + (items.length
+        ? 'Na última encomenda fizemos ' + items.join(', ') + '. Precisam de alguma reposição ou querem atualizar as quantidades?'
+        : 'Gostava de saber se precisam de repor algum artigo da última encomenda ou têm uma nova personalização em vista.')
+      label.append(draft)
+      details.append(label)
+      const state = node('select', '')
+      for (const value of commercialStates) state.add(new Option(value))
+      const stateLabel = node('label', 'Resultado do contacto')
+      stateLabel.append(state)
+      const date = node('input', '')
+      date.type = 'date'
+      date.min = addDays(currentDate, 1)
+      date.value = addDays(currentDate, 7)
+      const dateField = node('label', 'Voltar a contactar em')
+      dateField.append(date)
+      details.append(stateLabel, dateField, button('Guardar seguimento', () => run(async () => {
+        await api('/commercial-followup', { id: client.id, key, state: state.value, next: date.value })
+        await refresh()
+      }, 'Seguimento guardado.')))
+      card.append(details)
+      if (items.length) card.append(button('Preparar orçamento', () => {
+        selectView('quotes')
+        salesForm.elements.customer.value = client.name
+        salesForm.elements.notes.value = latest.sale.notes ?? ''
+        const lines = latest.sale.lines.filter(line => !isDeliveryLine(line) && catalogue.some(product => product.sku === line.sku))
+        if (lines.length) {
+          element('sales-lines').replaceChildren()
+          for (const line of lines) {
+            addSaleLine(line)
+            const row = element('sales-lines').lastElementChild
+            const price = catalogue.find(product => product.sku === line.sku).sell
+            row.querySelector('[name=price]').value = price ?? ''
+          }
+          salesTotal()
+        }
+        salesForm.elements.due.focus()
+      }))
+      return card
+    })
+  }
+
   async function refresh() {
-    const { products, orders, sales, clients, productionLines: lines } = await api()
+    const { products, orders, sales, clients, orderHistory, productionLines: lines } = await api()
     productionLines = lines
     productsForProfit = products
     catalogue = products.filter(product => !product.archived)
     savedSales = sales
     savedClients = clients
+    savedOrderHistory = orderHistory
     if (view === 'clients') renderClients()
     if (view === 'reports') renderReport()
     renderSales(view)
     const { queue, purchases } = plan(products, orders)
     const currentDate = today()
     renderDeliveryAlerts(currentDate)
+    renderCustomerAlerts(currentDate)
     const number = new Intl.NumberFormat('pt-PT')
     const totalUnits = purchases.length
     const totalCost = purchases.reduce((total, item) => total + item.quantity * Number(item.product.cost), 0)

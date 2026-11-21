@@ -127,6 +127,16 @@
     <h2 id="delivery-alerts-title">Alertas de entrega</h2>
     <div id="delivery-alert-list"></div>
   </section>
+  <details id="customer-alerts">
+    <summary id="customer-alert-summary">Inteligência Comercial</summary>
+    <label>Prazo sem histórico suficiente (dias)
+      <select id="customer-alert-days">
+        <option value="30">30</option><option value="60">60</option>
+        <option value="90" selected>90</option><option value="180">180</option>
+      </select>
+    </label>
+    <div id="customer-alert-list"></div>
+  </details>
   <div class="metrics" aria-label="Resumo do planeamento">
     <div class="metric"><span>Encomendas pendentes</span><strong id="metric-orders">0</strong></div>
     <div class="metric"><span>Encomendas em atraso</span><strong id="metric-late">0</strong></div>
@@ -263,5 +273,5 @@
 </div>
 
 </div>
-<script type="module" src="./sync.mjs?v=alerts-1"></script>
+<script type="module" src="./sync.mjs?v=commercial-1"></script>
 </html>
