@@ -1,21 +1,6 @@
 {
-  "date": "2026-11-21",
-  "items": [
-    {
-      "name": "Gravata de natal “copito”",
-      "sku": "CF-PD-38-AZ",
-      "photoUrl": "https://www.colame.net/wp-content/uploads/woocommerce-placeholder-324x324.png",
-      "supplier": "Cola-me",
-      "country": "PT",
-      "url": "https://www.colame.net/produto/gravata-de-natal-copito/",
-      "season": "Natal",
-      "idea": "Enfeite ou presente de Natal com nome e ano",
-      "audience": "Famílias e empresas",
-      "buyPrice": "€ 7,66 no catálogo",
-      "sellPrice": "A calcular após portes e personalização",
-      "recommendation": "Faz uma amostra e abre pré-encomendas para a campanha Natal."
-    }
-  ],
+  "date": "2026-11-22",
+  "items": [],
   "sources": [
     {
       "supplier": "Print e Poupe",
@@ -27,7 +12,7 @@
       "supplier": "Cola-me",
       "country": "PT",
       "checked": true,
-      "found": 46
+      "found": 42
     },
     {
       "supplier": "Sublimet",
@@ -125,7 +110,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/outros/saco-garrafa-vinho/saco_para_garrafa_vinho-80x80.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "4,94€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/carteira-porta-moedas-para-sublimar-15-x-10-5-cm ": {
       "name": "Carteira Porta Moedas para sublimar - 15 x 10.5 cm",
@@ -133,7 +118,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/outros/porta-moedas/carteira-moedas-80x80.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "1,85€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/puzzle-a5-magnetico-branco-para-sublimacao-80-pcs ": {
       "name": "Puzzle A5 magnético branco para sublimação - 80 pcs",
@@ -141,7 +126,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/puzzles/puzzle_a4_magnetico_para_sublimacao_branco_mate-80x80.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "2,21€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/saco-para-garrafa-de-vinho-para-sublimar": {
       "name": "Saco para Garrafa de Vinho para sublimar",
@@ -149,7 +134,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/outros/saco-garrafa-vinho/saco_para_garrafa_vinho-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "4,94€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/carteira-porta-moedas-para-sublimar-15-x-10-5-cm": {
       "name": "Carteira Porta Moedas para sublimar - 15 x 10.5 cm",
@@ -157,7 +142,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/outros/porta-moedas/carteira-moedas-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "1,85€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/puzzle-a5-magnetico-branco-para-sublimacao-80-pcs": {
       "name": "Puzzle A5 magnético branco para sublimação - 80 pcs",
@@ -165,7 +150,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/puzzles/puzzle_a4_magnetico_para_sublimacao_branco_mate-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "2,21€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/t-shirt-crianca-c-grande-opacidade-em-poliester-branco-e-toque-algodao-para-sublimacao-180-gr-unisexo": {
       "name": "T-shirt Criança c/ Grande Opacidade em Poliéster Branco e Toque Algodão para Sublimação, 180 gr. Unisexo",
@@ -173,7 +158,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/texteis/T-Shirts/Opaca/crianca/t-shirt-crianca-grande-opacidade-sublimacao-unissexo0-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "4,31€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/cracha-magnetico-p-roupa-p-personalizar-fixacao-sem-alfinetes": {
       "name": "Crachá Magnético p/ Roupa p/ Personalizar (Fixação sem alfinetes)",
@@ -181,7 +166,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/crachas/magnetico-roupa/magnetico-roupa_7-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "0,86€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/capa-p-galaxy-s26-fe-sublimacao-2d": {
       "name": "Capa p/ Galaxy S26 FE -  Sublimação 2D",
@@ -189,7 +174,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/telemoveis/2d/Samsung/Series-S/S26-FE/samsung-galaxy-s26-fe-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "3,49€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/capa-p-xiaomi-17t-pro-sublimacao-2d": {
       "name": "Capa p/ Xiaomi 17T Pro - Sublimação 2D",
@@ -197,7 +182,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/telemoveis/2d/Xiaomi/17/xiaomi-17-228x228.png",
       "supplier": "Print e Poupe",
       "buyPrice": "3,49€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/capa-p-xiaomi-17t-sublimacao-2d": {
       "name": "Capa p/ Xiaomi 17T - Sublimação 2D",
@@ -205,7 +190,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/telemoveis/2d/Xiaomi/17T/xiaomi-17t-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "3,49€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/capa-p-oppo-reno14-f-sublimacao-2d": {
       "name": "Capa p/ Oppo Reno14 F - Sublimação 2D",
@@ -213,7 +198,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/telemoveis/2d/Oppo/Reno13-F-5G/oppo-reno-13f-5g-228x228.png",
       "supplier": "Print e Poupe",
       "buyPrice": "3,49€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/capa-p-galaxy-a57-sublimacao-2d": {
       "name": "Capa p/ Galaxy A57 - Sublimação 2D",
@@ -221,7 +206,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/telemoveis/2d/Samsung/series-A/A57/samsung-galaxy-a57-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "2,99€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/capa-p-galaxy-a37-sublimacao-2d": {
       "name": "Capa p/ Galaxy A37 - Sublimação 2D",
@@ -229,7 +214,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/telemoveis/2d/Samsung/series-A/A37/samsung-galaxy-a37-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "2,99€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/painel-de-azulejos-personalizado-protecao-anti-uv": {
       "name": "Painel de Azulejos Personalizado + Proteção Anti-UV",
@@ -237,7 +222,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/servicos/personalizacao/azulejos/painel/personalizacao-paneis-azulejos_2-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "9,84€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/caneca-dourada-espelhada-metalizada-em-ceramica-p-sublimacao": {
       "name": "Caneca Dourada Espelhada Metalizada em Cerâmica p/ Sublimação",
@@ -245,7 +230,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/canecas/especiais/espelhadas/dourada/caneca-dourada-espelhada-metalizada-11oz-sublimacao-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "3,35€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/caneca-prateada-espelhada-metalizada-em-ceramica-p-sublimacao": {
       "name": "Caneca Prateada Espelhada Metalizada em Cerâmica p/ Sublimação",
@@ -253,7 +238,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/canecas/especiais/espelhadas/prateada/caneca-prateada-espelhada-metalizada-11oz-sublimacao-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "3,35€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/capa-p-galaxy-s26-edge-sublimacao-2d": {
       "name": "Capa p/ Galaxy S26 Edge -  Sublimação 2D",
@@ -261,7 +246,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/telemoveis/2d/Samsung/Series-S/S25-edge/samsung-galaxy-s25-edge-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "3,49€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/abre-garrafas-50-x-90-mm-magnetico-para-personalizar": {
       "name": "Abre Garrafas 50 x 90 mm Magnético para Personalizar",
@@ -269,7 +254,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/crachas/abre-garrafas/50x90/abre-garrafas-50x90mm-iman-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "1,19€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/capa-p-xiaomi-redmi-note-15-pro-5g-sublimacao-2d": {
       "name": "Capa p/ Xiaomi Redmi Note 15 Pro 5G - Sublimação 2D",
@@ -277,7 +262,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/telemoveis/2d/Xiaomi/redmi-note/redmi-note-15-pro/xiaomi-redmi-note-15-pro-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "3,49€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://printepoupe.com/loja/caneca-sublimacao-branca-qualidade-suprema-aaa-caixa": {
       "name": "Caneca Sublimação Branca qualidade Suprema AAA + Caixa",
@@ -285,7 +270,7 @@
       "photoUrl": "https://printepoupe.com/loja/image/cache/catalog/produtos/sublimacao/canecas/branca/suprema_AAA%20/Caneca_sublimacao_branca_suprema_AAA+_com_caixa-228x228.jpg",
       "supplier": "Print e Poupe",
       "buyPrice": "2,15€ no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/lampara-extensible/": {
       "name": "LÁmpara extensible",
@@ -301,7 +286,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/Z-995-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,47 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/pulseira-de-sublimacao-com-fecho-ajustavel/": {
       "name": "Pulseira de sublimaÇÃo com fecho ajustÁvel",
@@ -309,7 +294,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/Z-1069-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,48 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/pulseira-sublimacao-yorox/": {
       "name": "Pulseira sublimaÇÃo “yorox”",
@@ -317,7 +302,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/Z-1059-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,34 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/lanyard-sublimacao-dupla-face-2-mosquetoes-naya/": {
       "name": "Lanyard sublimaÇÃo dupla face 2 mosquetÕes “naya”",
@@ -325,7 +310,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/Z-1049-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 1,91 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/lanyard-sublimacao-dupla-face-naye/": {
       "name": "Lanyard sublimaÇÃo dupla face “naye”",
@@ -333,7 +318,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/Z-1048-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 1,64 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/lanyard-sublimacao-adaz/": {
       "name": "Lanyard sublimaÇÃo “adaz”",
@@ -341,7 +326,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/Z-1045-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,98 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/lanyard-sublimacao-de-duplo-ajuste-balvit/": {
       "name": "Lanyard sublimaÇÃo de duplo ajuste “balvit”",
@@ -349,7 +334,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/Z-1044-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 1,43 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/bloco-de-notas-adesivas/": {
       "name": "Bloco de notas adesivas",
@@ -357,7 +342,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/NT-001-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,49 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/tapete-rato-quatricromia-3/": {
       "name": "Tapete rato quatricromia",
@@ -365,7 +350,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/N-831-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 2,69 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/tapete-rato-quatricromia-23x20-cm/": {
       "name": "Tapete rato quatricromia 23×20 cm",
@@ -373,7 +358,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/N-822-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 2,91 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/tapete-rato-quatricromia/": {
       "name": "Tapete rato quatricromia",
@@ -381,7 +366,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/N-821-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 2,69 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/tapete-rato-quatricromia-22x15-cm/": {
       "name": "Tapete rato quatricromia 22×15 cm",
@@ -389,7 +374,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/N-820-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 2,34 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/bloco-8x11-100-folhas/": {
       "name": "Bloco 8×11  100 folhas",
@@ -397,7 +382,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/N-013-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 1,57 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/calendario-de-sobremesa-gr/": {
       "name": "CalendÁrio de sobremesa gr",
@@ -405,7 +390,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/N-012-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 5,42 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/alfinete-de-gravata/": {
       "name": "Alfinete de gravata",
@@ -413,7 +398,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/K-110-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 2,84 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/iman-duplo-imax/": {
       "name": "Iman duplo imax",
@@ -421,7 +406,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/IMAX-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,62 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/iman-grande/": {
       "name": "Íman grande",
@@ -429,7 +414,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/IG-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,56 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/iman-personalizado/": {
       "name": "Iman personalizado",
@@ -437,7 +422,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/IESP-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 1,15 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/iman-porta-notas/": {
       "name": "Iman porta notas",
@@ -445,7 +430,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/I-NT-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,48 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/foto-piruleta-redonda/": {
       "name": "Foto-piruleta redonda",
@@ -453,7 +438,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/EP-02-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,69 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/foto-piruleta-coracao/": {
       "name": "Foto-piruleta coraÇÃo",
@@ -461,7 +446,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/EP-01-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,77 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/limas-de-unhas-c-calendario-3/": {
       "name": "Limas de unhas c/ calendÁrio",
@@ -469,7 +454,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/EL-002-PT-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,54 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/limas-de-unhas-c-calendario-2/": {
       "name": "Limas de unhas c/ calendÁrio",
@@ -477,7 +462,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/EL-002-OR-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,54 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/limas-de-unhas-c-calendario/": {
       "name": "Limas de unhas c/ calendÁrio",
@@ -485,7 +470,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/EL-002-FU-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,54 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/portalapiz-hexagonal/": {
       "name": "PortalapÍz hexagonal",
@@ -493,7 +478,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/B-HEX-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 1,65 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/calendario-postal-pequeno/": {
       "name": "CalendÁrio postal pequeno",
@@ -517,7 +502,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/71b87923-be9f-4d34-b036-969b79cb10cd-324x432.jpeg",
       "supplier": "Cola-me",
       "buyPrice": "€ 4,95 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/saco-non-woven-wonder/": {
       "name": "Saco non woven “wonder”",
@@ -525,7 +510,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/T-483-MA-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,07 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/saco-de-algodao-confort-color-2/": {
       "name": "Saco de algodÃo “confort color”",
@@ -533,7 +518,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/T-4003-NE-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 1,70 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/portachaves-busca-objectos-2/": {
       "name": "Portachaves busca objectos",
@@ -541,7 +526,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/C-004-NE-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 1,89 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/portachaves-busca-objectos/": {
       "name": "Portachaves busca objectos",
@@ -549,7 +534,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/11/C-004-BL-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 1,89 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/placa-contraplacado-betula-3mm-60x40cm-ideal-para-corte-e-gravacao-a-laser-modelo-2/": {
       "name": "Placa Contraplacado Bétula 3mm – 60x40cm (Ideal para corte e gravação a laser) Modelo 2",
@@ -557,7 +542,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/10/8b8663f6-732f-4c3a-8436-74706f9bf30b-324x432.jpeg",
       "supplier": "Cola-me",
       "buyPrice": "€ 4,50 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/colgante-bocina-katar/": {
       "name": "Colgante bocina “katar”",
@@ -565,7 +550,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/10/D-054-RO-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 0,51 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/articulo-promocional-con-lote/": {
       "name": "Articulo promocional con lote",
@@ -573,7 +558,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/10/Y-127-L-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 15,33 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/paraguas-automatico-cardiff/": {
       "name": "Paraguas automÁtico “cardiff”",
@@ -581,7 +566,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/10/11173-AM-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 5,08 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/cuelgabolsos-capri/": {
       "name": "Cuelgabolsos “capri”",
@@ -589,7 +574,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/09/10160-AZ-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 1,33 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/manta-de-viajem-calidez/": {
       "name": "Manta de viajem “calidez”",
@@ -597,7 +582,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/09/S-019-NE-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 4,05 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/mochila-pierre-delone-tomi-2/": {
       "name": "Mochila pierre delone “tomi”",
@@ -605,7 +590,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/2026/09/11070-MA-500x500-1-324x324.jpg",
       "supplier": "Cola-me",
       "buyPrice": "€ 24,62 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/mochila-tayron/": {
       "name": "Mochila  “tayron”",
@@ -613,7 +598,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/woocommerce-placeholder-324x324.png",
       "supplier": "Cola-me",
       "buyPrice": "€ 16,27 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/mochila-pierre-delone-somerset/": {
       "name": "Mochila pierre delone “somerset”",
@@ -621,7 +606,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/woocommerce-placeholder-324x324.png",
       "supplier": "Cola-me",
       "buyPrice": "€ 19,72 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/cubitera-vintage-2/": {
       "name": "Cubitera vintage",
@@ -637,7 +622,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/woocommerce-placeholder-324x324.png",
       "supplier": "Cola-me",
       "buyPrice": "€ 7,66 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/gravata-de-natal-copito-2/": {
       "name": "Gravata de natal “copito”",
@@ -645,7 +630,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/woocommerce-placeholder-324x324.png",
       "supplier": "Cola-me",
       "buyPrice": "€ 7,66 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.colame.net/produto/gravata-de-natal-copito/": {
       "name": "Gravata de natal “copito”",
@@ -653,7 +638,7 @@
       "photoUrl": "https://www.colame.net/wp-content/uploads/woocommerce-placeholder-324x324.png",
       "supplier": "Cola-me",
       "buyPrice": "€ 7,66 no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.sublimet.com/es/llaveros-metalicos-casa-uv-umy-x100/": {
       "name": "Llaveros metálicos casa UV UMY (x100)",
@@ -661,7 +646,7 @@
       "photoUrl": "https://www.sublimet.com/20285-home_default/llaveros-metalicos-casa-uv-umy-x100.jpg",
       "supplier": "Sublimet",
       "buyPrice": "111,20 € no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     },
     "https://www.sublimet.com/es/llaveros-metalicos-cuadrados-sm-10d-personalizar/": {
       "name": "Llaveros metálicos cuadrados SM-10D",
@@ -669,7 +654,7 @@
       "photoUrl": "https://www.sublimet.com/7999-home_default/llaveros-metalicos-cuadrados-sm-10d-personalizar.jpg",
       "supplier": "Sublimet",
       "buyPrice": "2,21 € no catálogo",
-      "date": "2026-11-21"
+      "date": "2026-11-22"
     }
   }
 }
