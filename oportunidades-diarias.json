@@ -238,10 +238,10 @@
     {
       "supplier": "Brildor",
       "country": "ES",
-      "checked": false,
-      "pagesChecked": 0,
+      "checked": true,
+      "pagesChecked": 4,
       "pagesUnavailable": 3,
-      "found": 0
+      "found": 4
     }
   ],
   "seen": {
@@ -318,7 +318,11 @@
     "https://www.sublimet.com/es/laserpecker-lp5-grabadora-laser-portatil-diodo-fibra-inteligente-20w/": "2026-11-20",
     "https://www.sublimet.com/es/laserpecker-lp2-plus-grabadora-cortadora-laser/": "2026-11-20",
     "https://www.sublimet.com/es/laserpecker-lx2-cortadora-laser/": "2026-11-20",
-    "https://www.colame.net/produto/gravata-de-natal-copito/": "2026-11-21"
+    "https://www.colame.net/produto/gravata-de-natal-copito/": "2026-11-21",
+    "https://www.brildor.com/pt/fotopaineis-bambu-placa-sublimavel": "2026-11-23",
+    "https://www.brildor.com/pt/paineis-fotograficos-ardosia-sublimaveis": "2026-11-23",
+    "https://www.brildor.com/pt/puzzle-cartao-sublimaveis": "2026-11-23",
+    "https://www.brildor.com/pt/placas-bambu": "2026-11-23"
   },
   "lastShown": {
     "https://printepoupe.com/loja/abre-garrafas-50-x-90-mm-magnetico-para-personalizar": "2026-11-23",
