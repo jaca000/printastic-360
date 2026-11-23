@@ -20,6 +20,12 @@ SOURCES = [
     ("Brildor", "ES", "https://www.brildor.com/pt/personalizaveis", ".product-item-link, .product-item-name a"),
     ("Brildor", "ES", "https://www.brildor.com/pt/personalizaveis/paineis-sublimacao/madeira", ".product-item-link, .product-item-name a"),
 ]
+BRILDOR_FICHAS = (
+    "https://www.brildor.com/pt/fotopaineis-bambu-placa-sublimavel",
+    "https://www.brildor.com/pt/paineis-fotograficos-ardosia-sublimaveis",
+    "https://www.brildor.com/pt/puzzle-cartao-sublimaveis",
+    "https://www.brildor.com/pt/placas-bambu",
+)
 PRODUCTS = [
     (r"fotopain|ard[oó]sia|moldura|lumin[aá]ria|\bled\b|luz noturna", "Cria uma peça fotográfica com dedicatória e uma opção com embalagem de oferta", "Famílias, escolas e associações", ""),
     (r"puzzle|quebra.cabe|jogo|domin[oó]", "Transforma uma fotografia ou ilustração original num jogo personalizado", "Escolas, famílias e eventos", ""),
@@ -118,6 +124,33 @@ def records(supplier, country, source, selector, season):
     return items
 
 
+def brildor_product(url, season):
+    if not permitted(url):
+        raise ValueError("robots.txt restringe esta ficha")
+    time.sleep(1)
+    response = HTTP.get(url, timeout=15)
+    response.raise_for_status()
+    if urlsplit(response.url).path.rstrip("/") != urlsplit(url).path.rstrip("/"):
+        raise ValueError("a ficha redireciona para outra página")
+    soup = BeautifulSoup(response.text, "html.parser")
+    title = soup.select_one("main h1, h1.page-title, h1")
+    name = title.get_text(" ", strip=True) if title else ""
+    if not name or EXCLUDE.search(name) or product_family(name) == len(PRODUCTS):
+        raise ValueError("ficha de produto indisponível")
+    _, idea, audience, occasion = PRODUCTS[product_family(name)]
+    picture = soup.select_one('meta[property="og:image"]')
+    image = urljoin(url, picture.get("content", "")) if picture else ""
+    price = soup.select_one('meta[property="product:price:amount"], meta[itemprop="price"]')
+    amount = price.get("content", "") if price else ""
+    buy_price = amount + " € na ficha" if re.fullmatch(r"\d+(?:[.,]\d{1,2})?", amount) else "Consultar ficha"
+    return {
+        "name": name, "supplier": "Brildor", "country": "ES", "url": url,
+        "season": occasion or season, "idea": idea, "audience": audience, "image": image,
+        "buyPrice": buy_price, "sellPrice": "A calcular após portes e personalização",
+        "recommendation": "Valida as dimensões e a técnica com uma amostra antes de abrir pré-encomendas.",
+    }
+
+
 def identity(item):
     return item["supplier"], " ".join(re.findall(r"\w+", item["name"].casefold()))
 
@@ -186,6 +219,17 @@ def main():
         except (requests.RequestException, ValueError) as error:
             summary["pagesUnavailable"] += 1
             print(f"{supplier} · {url}: {error}", flush=True)
+    brildor = summaries["Brildor"]
+    if not any(item["supplier"] == "Brildor" for item in available.values()):
+        for url in BRILDOR_FICHAS:
+            try:
+                item = brildor_product(url, campaign(now.month))
+                brildor["checked"] = True
+                brildor["pagesChecked"] += 1
+                available.setdefault(url, item)
+            except (requests.RequestException, ValueError) as error:
+                brildor["pagesUnavailable"] += 1
+                print(f"Brildor · {url}: {error}", flush=True)
     candidates = list(available.values())
     stats = list(summaries.values())
     for source in stats:
