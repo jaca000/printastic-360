@@ -162,6 +162,20 @@ function start() {
   const decode = string => Uint8Array.from(atob(string), char => char.charCodeAt(0))
   const encoder = new TextEncoder()
   let vaultSession
+  const tabSessionKey = 'printastic360-tab-session-v1'
+  const tabSessionDuration = 8 * 60 * 60 * 1000
+  const vaultEndpoint = 'https://198.245.56.245'
+  const encryption = { name: 'AES-GCM', length: 256 }
+
+  function tabSession(value) {
+    try {
+      if (value === null) sessionStorage.removeItem(tabSessionKey)
+      else if (value !== undefined) sessionStorage.setItem(tabSessionKey, JSON.stringify(value))
+      else return JSON.parse(sessionStorage.getItem(tabSessionKey))
+    } catch {
+      return null
+    }
+  }
 
   const menu = element('app-menu')
   const frame = element('app-view')
@@ -206,6 +220,8 @@ function start() {
       frame.removeAttribute('src')
     }
     view = next
+    const anchor = tabs.find(tab => tab.dataset.view === next)?.hash
+    if (anchor && location.hash !== anchor) history.replaceState(history.state, '', anchor)
   }
 
   for (const tab of tabs) {
@@ -219,11 +235,11 @@ function start() {
     }
   }
 
-  function loginState(open) {
+  function loginState(open, initialView = 'production') {
     menu.hidden = !open
     element('access-copy').hidden = open
     if (open) {
-      selectView('production')
+      selectView(initialView)
     } else {
       frame.hidden = true
       frame.removeAttribute('src')
@@ -236,16 +252,7 @@ function start() {
       view = undefined
     }
     localLogin.hidden = open
-    element('backup').hidden = !open
     element('lock').hidden = !open
-  }
-
-  async function derive(password, salt) {
-    const material = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveKey'])
-    return crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' },
-      material, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
-    )
   }
 
   async function readVault(session) {
@@ -271,20 +278,40 @@ function start() {
     session.revision = revision
   }
 
-  async function access(password) {
-    const endpoint = 'https://198.245.56.245'
-    const material = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits'])
-    const token = await crypto.subtle.deriveBits({
-      name: 'PBKDF2', salt: encoder.encode('Printastic 360 API login v1 | 198.245.56.245'),
-      iterations: 600000, hash: 'SHA-256'
-    }, material, 256)
-    const remote = connectVault(endpoint, encode(new Uint8Array(token)).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, ''))
+  async function access({ password, remembered }) {
+    const material = remembered ? null :
+      await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits'])
+    const derive = salt => crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' }, material, 256
+    )
+    const token = remembered?.token ?? encode(new Uint8Array(await derive(
+      encoder.encode('Printastic 360 API login v1 | 198.245.56.245')
+    ))).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '')
+    const remote = connectVault(vaultEndpoint, token)
     const stored = await remote.read()
     if (!stored) throw new Error('O servidor ainda não tem uma cópia dos registos.')
     const { salt } = JSON.parse(stored.body)
-    const session = { remote, ...stored, salt, key: await derive(password, decode(salt)) }
+    if (remembered && remembered.salt !== salt) throw new Error('Desbloqueia novamente os registos.')
+    const rawKey = remembered ? decode(remembered.key) : new Uint8Array(await derive(decode(salt)))
+    const key = await crypto.subtle.importKey('raw', rawKey, encryption, false, ['encrypt', 'decrypt'])
+    const session = { remote, ...stored, salt, key }
     await readVault(session)
+    if (!remembered) tabSession({ token, salt, key: encode(rawKey), expires: Date.now() + tabSessionDuration })
     return session
+  }
+
+  async function unlock(credentials) {
+    const initialView = tabs.find(tab => tab.hash === location.hash)?.dataset.view
+    vaultSession = await access(credentials)
+    try {
+      await refresh()
+      loginState(true, initialView)
+    } catch (error) {
+      vaultSession = undefined
+      tabSession(null)
+      loginState(false)
+      throw error
+    }
   }
 
   async function browserData(path, data) {
@@ -428,10 +455,7 @@ function start() {
     event.preventDefault()
     run(async () => {
       try {
-        vaultSession = await access(passField.value)
-        await refresh()
-        loginState(true)
-        element('workspace').hidden = false
+        await unlock({ password: passField.value })
       } finally {
         localLogin.reset()
       }
@@ -439,6 +463,7 @@ function start() {
   }
 
   element('lock').onclick = () => run(async () => {
+    tabSession(null)
     vaultSession = undefined
     element('workspace').hidden = true
     catalogue = []
@@ -629,6 +654,8 @@ function start() {
     element('cancel-order-edit').hidden = true
     element('sales-lines').replaceChildren()
     element('legacy-edit').hidden = true
+    element('new-order').hidden = quote
+    element('sale-editor').hidden = !quote
     element('sale-editor').open = quote
     element('sales-title').textContent = quote ? 'Novo orçamento' : 'Nova encomenda'
     element('sales-list-title').textContent = quote ? 'Orçamentos registados' : 'Encomendas registadas'
@@ -650,6 +677,7 @@ function start() {
     element('sales-title').textContent = 'Editar encomenda ' + sale.reference
     element('save-sales').textContent = 'Guardar alterações'
     element('cancel-order-edit').hidden = false
+    element('sale-editor').hidden = false
     element('sale-editor').open = true
     salesForm.elements.customer.focus()
   }
@@ -788,15 +816,47 @@ function start() {
     }, message))
   }
 
+  const orderSearchKey = value => String(value ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .toLocaleLowerCase('pt-PT')
+
+  function sortOrders(a, b, sort) {
+    const deadline = () => (a.due || '9999').localeCompare(b.due || '9999')
+    const recent = () => String(b.createdAt ?? '').localeCompare(String(a.createdAt ?? ''))
+    const client = () => a.customer.localeCompare(b.customer, 'pt-PT', { sensitivity: 'base' })
+    if (sort === 'client') return client() || deadline() || a.reference.localeCompare(b.reference)
+    if (sort === 'recent') return recent() || deadline() || a.reference.localeCompare(b.reference)
+    return Number(Boolean(a.closedAt)) - Number(Boolean(b.closedAt)) ||
+      (a.closedAt && b.closedAt ? b.closedAt.localeCompare(a.closedAt) : deadline()) ||
+      client() || a.reference.localeCompare(b.reference)
+  }
+
   function renderSales(next) {
     if (next !== 'quotes' && next !== 'orders') return
     const quote = next === 'quotes'
     const clients = new Set([...savedClients.map(client => client.name), ...savedSales.map(sale => sale.customer)])
     element('clients').replaceChildren(...[...clients].sort().map(client => new Option(client)))
-    element('order-filter').hidden = quote
+    element('order-tools').hidden = quote
+    const count = element('order-count')
+    count.hidden = quote
     const filter = element('order-filter').value
+    const terms = orderSearchKey(element('order-search').value).trim().split(/\s+/).filter(Boolean)
+    const openOrders = new Set([...element('sales-list').children]
+      .filter(card => card.querySelector('.order-details[open]')).map(card => card.dataset.orderReference))
     const sales = savedSales.filter(sale => sale.kind === (quote ? 'quote' : 'order') &&
       (quote || filter === 'all' || (filter === 'active' ? !sale.closedAt : currentOrderState(sale) === filter))).reverse()
+    if (!quote) {
+      const sort = element('order-sort').value
+      sales.sort((a, b) => sortOrders(a, b, sort))
+      if (terms.length) {
+        const matches = sales.filter(sale => {
+          const text = orderSearchKey([sale.customer, sale.reference, sale.invoiceNumber,
+            ...sale.lines.flatMap(line => [line.name, line.sku])].join(' '))
+          return terms.every(term => text.includes(term))
+        })
+        sales.splice(0, sales.length, ...matches)
+      }
+      count.textContent = sales.length + (sales.length === 1 ? ' encomenda' : ' encomendas')
+    }
     const totals = element('order-totals')
     totals.hidden = quote
     if (!quote) {
@@ -813,17 +873,44 @@ function start() {
         totals.querySelector('[data-total="' + name + '"]').textContent = money.format(amount / 100)
       }
     }
-    list('sales-list', sales, quote ? 'Ainda não há orçamentos.' : 'Ainda não há encomendas registadas neste ecrã.', sale => {
+    list('sales-list', sales, quote ? 'Ainda não há orçamentos.' : 'Nenhuma encomenda corresponde à pesquisa e ao estado selecionados.', sale => {
       const card = node('article', '')
       if (!quote) {
         card.dataset.orderReference = sale.reference
         card.tabIndex = -1
       }
       const total = saleTotal(sale)
-      card.append(node('strong', sale.reference + ' · ' + sale.customer),
+      if (quote) card.append(node('strong', sale.reference + ' · ' + sale.customer),
         node('p', 'Prazo ' + dateLabel.format(new Date(sale.due)) + ' · ' + money.format(total / 100)))
-      const details = node('details', '')
-      details.append(node('summary', 'Produtos e histórico'))
+      let actions = card
+      if (!quote) {
+        const disclosure = node('details', '')
+        disclosure.className = 'order-details'
+        disclosure.open = openOrders.has(sale.reference)
+        const summary = node('summary', '')
+        summary.className = 'order-summary'
+        const identity = node('span', '')
+        identity.className = 'order-identity'
+        identity.append(node('strong', sale.customer), node('small', sale.reference))
+        const due = sale.due ? dateLabel.format(new Date(sale.due)) : 'Sem prazo'
+        const deadline = node('span', due)
+        deadline.className = 'order-deadline'
+        const current = today()
+        if (sale.due && !sale.closedAt && sale.due <= current) {
+          deadline.textContent += sale.due < current ? ' · Em atraso' : ' · Hoje'
+          if (sale.due < current) deadline.classList.add('late')
+        }
+        const value = node('span', money.format(total / 100))
+        value.append(node('span', ''))
+        value.lastChild.className = 'order-expand'
+        summary.append(identity, deadline, value)
+        actions = node('div', '')
+        actions.className = 'order-panel'
+        disclosure.append(summary, actions)
+        card.append(disclosure)
+      }
+      const details = node(quote ? 'details' : 'div', '')
+      details.append(node(quote ? 'summary' : 'h3', 'Produtos e histórico'))
       for (const line of sale.lines) details.append(node('p', formatQuantity(line.quantity, line.unit) + ' × ' + line.name))
       if (sale.delivery) details.append(node('p', 'Portes de envio · ' + money.format(sale.delivery / 100)))
       if (!quote && !sale.closedAt && sale.lines.some(isDeliveryLine) && sale.lines.some(line => !isDeliveryLine(line))) {
@@ -873,21 +960,21 @@ function start() {
           }, 'Estado da fatura guardado.')
         }
         invoice.append(label, numberLabel, saveInvoice)
-        card.append(invoice)
-        card.append(badges, node('p', 'Pago ' + money.format(paid / 100) + ' · Por pagar ' + money.format((total - paid) / 100)))
+        card.querySelector('.order-summary').append(badges)
+        actions.append(invoice, node('p', 'Pago ' + money.format(paid / 100) + ' · Por pagar ' + money.format((total - paid) / 100)))
         for (const item of sale.payments ?? []) {
           details.append(node('p', item.date + ' · ' + item.method + ' · ' + money.format(item.amount / 100)))
         }
         if (sale.closedAt) details.append(node('p', 'Fechada em ' + dateLabel.format(new Date(sale.closedAt))))
-        if (state === 'pending') card.append(orderAction(sale, 'Iniciar produção', 'start', 'Encomenda em produção.'))
-        if (state === 'pending' || state === 'producing') card.append(orderAction(sale, 'Marcar como pronta', 'ready', 'Encomenda pronta. Stock atualizado.'))
-        if (state !== 'closed' && paid < total) card.append(button('Registar pagamento', () => openPayment(sale)))
-        if (state === 'ready' && payment === 'paid') card.append(orderAction(sale, 'Fechar encomenda', 'close', 'Encomenda fechada. Disponível no histórico e nos relatórios.'))
+        if (state === 'pending') actions.append(orderAction(sale, 'Iniciar produção', 'start', 'Encomenda em produção.'))
+        if (state === 'pending' || state === 'producing') actions.append(orderAction(sale, 'Marcar como pronta', 'ready', 'Encomenda pronta. Stock atualizado.'))
+        if (state !== 'closed' && paid < total) actions.append(button('Registar pagamento', () => openPayment(sale)))
+        if (state === 'ready' && payment === 'paid') actions.append(orderAction(sale, 'Fechar encomenda', 'close', 'Encomenda fechada. Disponível no histórico e nos relatórios.'))
       }
       if (!quote && !(sale.closedAt && paymentState(sale) === 'paid'))
-        card.append(button('Editar encomenda', () => openOrderEditor(sale)))
-      card.append(details)
-      card.append(button(quote ? 'Abrir orçamento' : 'Abrir nota de encomenda', () => {
+        actions.append(button('Editar encomenda', () => openOrderEditor(sale)))
+      actions.append(details)
+      actions.append(button(quote ? 'Abrir orçamento' : 'Abrir nota de encomenda', () => {
         try { printSale(sale) } catch (error) { element('status').textContent = error.message }
       }))
       if (quote && sale.converted) card.append(node('p', 'Convertido em encomenda'))
@@ -900,7 +987,17 @@ function start() {
     })
   }
 
+  element('new-order').onclick = () => {
+    const editor = element('sale-editor')
+    if (editor.hidden || editingSale) resetSale('orders')
+    editor.hidden = false
+    editor.open = true
+    salesForm.elements.customer.focus()
+  }
+
   element('order-filter').onchange = () => renderSales('orders')
+  element('order-sort').onchange = () => renderSales('orders')
+  element('order-search').oninput = () => renderSales('orders')
   element('add-line').onclick = () => addSaleLine()
   salesForm.addEventListener('input', salesTotal)
   salesForm.onsubmit = event => {
@@ -1112,10 +1209,14 @@ function start() {
       card.append(title, node('p', sale.reference + ' · ' + sale.customer + ' · ' +
         dateLabel.format(new Date(sale.due))), button('Ver encomenda', () => {
         element('order-filter').value = 'active'
+        element('order-search').value = ''
         selectView('orders')
         const orderCard = [...element('sales-list').children]
           .find(item => item.dataset.orderReference === sale.reference)
-        orderCard?.focus()
+        if (orderCard) {
+          orderCard.querySelector('.order-details').open = true
+          orderCard.querySelector('summary').focus()
+        }
       }))
       return card
     }))
@@ -1550,4 +1651,20 @@ function start() {
       }, 'Registo guardado.')
     }
   }
+
+  const remembered = tabSession()
+  if (remembered?.expires > Date.now()) {
+    run(async () => {
+      try {
+        await unlock({ remembered })
+      } catch {
+        tabSession(null)
+        return 'Desbloqueia a sessão para continuar.'
+      }
+      return 'Sessão retomada.'
+    })
+  } else if (remembered) {
+    tabSession(null)
+  }
+
 }

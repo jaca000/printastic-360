@@ -66,7 +66,24 @@
   #report-list article { margin-top:8px }
   #report-metrics { margin-top:16px }
   #sales-total { align-self:center }
-  #order-filter { width: min(100%, 15rem); margin-bottom: 12px }
+  #order-tools { display:grid; grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr)); gap:12px; align-items:end; margin-bottom:12px }
+  #order-tools[hidden], #order-count[hidden] { display:none }
+  #order-count { margin:0 0 12px; font-size:13px }
+  #sales-list .order-details { padding:0; margin:0; border:0; box-shadow:none; background:transparent }
+  #sales-list .order-summary { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto; align-items:center; gap:8px 16px; cursor:pointer; padding:2px 0 }
+  .order-identity { min-width:0; overflow-wrap:anywhere }
+  .order-identity small { display:block; margin-top:3px }
+  .order-summary .order-badges { grid-column:1/-1; margin:0 }
+  .order-expand { display:block; text-align:right; font-size:13px }
+  .order-details[open] .order-expand::after { content:"Fechar detalhes" }
+  .order-details:not([open]) .order-expand::after { content:"Ver detalhes" }
+  #sales-list .order-panel { margin-top:12px; padding-top:12px; border-top:1px solid var(--line) }
+  @media(max-width:640px) {
+    #order-tools { grid-template-columns:repeat(2,minmax(0,1fr)) }
+    #order-tools label:first-child { grid-column:1/-1 }
+    #sales-list .order-summary { grid-template-columns:minmax(0,1fr) auto }
+    .order-deadline { grid-row:2; grid-column:1/-1 }
+  }
   .invoice-toggle { display: flex; align-items: center; gap: 8px; width: fit-content; margin: 8px 0; cursor: pointer }
   .invoice-toggle label:first-child { display: flex; flex-direction: row; align-items: center; gap: 8px }
   .invoice-toggle { flex-wrap: wrap }
@@ -79,8 +96,10 @@
   #order-profit-note { display:block; margin-top:5px; font-size:.78rem }
   @media (max-width: 920px) { #order-totals { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
   @media (max-width: 560px) { #order-totals { grid-template-columns: 1fr } }
-  #order-filter[hidden] { display: none }
-  #sale-editor { margin-bottom: 14px }
+  #sale-editor { margin-bottom:14px }
+  #sale-editor[hidden], #new-order[hidden] { display:none }
+  #new-order { margin-bottom:12px }
+  #sales-list .order-deadline.late { color:#a22630 }
   .order-badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 }
   .order-badge { padding: 4px 10px; border-radius: 999px; font-size: .86rem; font-weight: 750; color: #173766; background: #e4efff }
   .order-badge.producing, .order-badge.partial { background: #f2e7ff; color: #61209a }
@@ -118,7 +137,7 @@
     <label>Palavra-passe<input type="password" name="password" required autocomplete="current-password"></label>
     <button id="local" type="submit">Desbloquear</button>
   </form>
-  <div class="buttons"><button id="backup" hidden>Descarregar cópia</button><button id="lock" hidden>Sair</button></div>
+  <div class="buttons"><button id="lock" hidden>Sair</button></div>
 </section>
 <p id="status" role="status"></p>
 <iframe id="app-view" hidden title="Printastic 360" style="width:100%;height:82vh;min-height:500px;border:0"></iframe>
@@ -210,8 +229,14 @@
     <div class="metrics" id="report-metrics"></div>
     <div id="report-list"></div>
   </section>
+  <details>
+    <summary>Cópia de segurança</summary>
+    <p>A cópia contém os registos cifrados do Printastic 360.</p>
+    <button id="backup" type="button">Descarregar cópia de segurança</button>
+  </details>
 </div>
 <div id="sales-area" hidden>
+  <button id="new-order" type="button" hidden>+ Nova encomenda</button>
   <details id="sale-editor">
     <summary id="sales-title">Nova encomenda</summary>
     <form id="sales-form" class="sales-form">
@@ -237,13 +262,18 @@
     </template>
   </details>
   <section><h2 id="sales-list-title">Encomendas registadas</h2>
-    <select id="order-filter" aria-label="Filtrar encomendas por estado"><option value="active">Ativas</option><option value="all">Todas</option><option value="pending">Pendentes</option><option value="producing">Em produção</option><option value="ready">Prontas</option><option value="closed">Fechadas</option></select>
+    <div id="order-tools">
+      <label>Pesquisar encomendas<input id="order-search" type="search" placeholder="Cliente, referência, produto ou fatura"></label>
+      <label>Estado<select id="order-filter" aria-label="Filtrar encomendas por estado"><option value="active">Ativas</option><option value="all">Todas</option><option value="pending">Pendentes</option><option value="producing">Em produção</option><option value="ready">Prontas</option><option value="closed">Fechadas</option></select></label>
+      <label>Ordenar por<select id="order-sort"><option value="deadline">Prazo de entrega</option><option value="client">Cliente (A–Z)</option><option value="recent">Mais recentes</option></select></label>
+    </div>
     <div class="metrics" id="order-totals" aria-label="Totais das encomendas filtradas" aria-live="polite" hidden>
       <div class="metric"><span>Valor das encomendas</span><strong data-total="total"></strong></div>
       <div class="metric"><span>Já recebido</span><strong data-total="paid"></strong></div>
       <div class="metric"><span>Por receber</span><strong data-total="outstanding"></strong></div>
       <div class="metric"><span>Lucro estimado</span><strong id="order-profit"></strong><small id="order-profit-note"></small></div>
     </div>
+    <p id="order-count" role="status" hidden></p>
     <div id="sales-list"></div>
   </section>
   <dialog id="payment-dialog">
@@ -273,5 +303,5 @@
 </div>
 
 </div>
-<script type="module" src="./sync.mjs?v=commercial-1"></script>
+<script type="module" src="./sync.mjs?v=orders-1"></script>
 </html>
