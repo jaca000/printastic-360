@@ -2,6 +2,7 @@
 <html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Oportunidades | Printastic 360</title>
 <style>
 *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:#0b1220;color:#eef5ff;font:16px system-ui,sans-serif}main{max-width:1080px;margin:auto;padding:clamp(18px,5vw,60px)}a{color:#a5e6d7;text-underline-offset:4px}h1{font-size:clamp(38px,6vw,70px);letter-spacing:-.065em;line-height:1;margin:.65em 0 .25em}p{line-height:1.55;color:#c3d1e9}header,article,.tools{border:1px solid #3c4b69;border-radius:16px;padding:clamp(14px,3vw,28px);background:#15213a;margin:12px 0}header{background:linear-gradient(130deg,#1c3758,#344568 72%,#624a61)}.tools{display:flex;gap:20px;flex-wrap:wrap;align-items:end}label{display:grid;gap:6px}select,input,button,textarea{font:inherit;max-width:100%}select,textarea{background:#0b1220;color:#eef5ff;border:1px solid #6d7b96;padding:8px;border-radius:7px}textarea{width:100%;margin:8px 0}button{background:#a5e6d7;color:#17272e;border:0;border-radius:7px;padding:8px 14px;cursor:pointer;font-weight:700}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:10px}article{margin:0}article h2{margin:0;font-size:20px}article p{margin:8px 0}small{color:#e6abba}
+.product-image{display:block;width:100%;height:160px;object-fit:contain;border-radius:10px;background:#fff;margin-bottom:12px}.tools input{padding:8px;border:1px solid #6d7b96;border-radius:7px}.tools label{flex:1;min-width:140px}
 </style>
 <link rel="stylesheet" href="./identidade.css">
 <script>
@@ -20,10 +21,13 @@ if (window.parent === window) {
 </script>
 </head><body><main>
 
-<header><h1>Oportunidades de venda</h1><p>Novidades nos fornecedores de Portugal e Espanha, com ideias de personalização e campanhas para a época.</p><p id="automatic" role="status">A procurar a última edição automática…</p></header>
-<div class="tools"><label>Importar pesquisa diária (.json)<input id="file" type="file" accept=".json,application/json"></label><label id="archive" hidden>Edição<select id="edition"></select></label></div>
-<details class="tools"><summary>Colar relatório em JSON</summary><textarea id="pasted" aria-label="Relatório JSON" rows="4"></textarea><button type="button" id="paste">Importar texto</button></details>
-<p id="status" role="status">Podes também importar uma edição em JSON.</p>
+<header><h1>Oportunidades de venda</h1><p>Produtos de fornecedores de Portugal e Espanha, com ideias para personalizar e vender.</p><p id="automatic" role="status">A procurar a última edição automática…</p></header>
+<div class="tools" id="opportunity-tools" hidden>
+  <label>Edição<select id="edition"></select></label>
+  <label>Fornecedor<select id="supplier"></select></label>
+  <label>Pesquisar<input id="opportunity-search" type="search" placeholder="Produto ou ideia"></label>
+</div>
+<p id="status" role="status"></p>
 <div class="cards" id="results"></div>
 </main>
-<script type="module" src="./oportunidades.mjs?v=automatico1"></script></body></html>
+<script type="module" src="./oportunidades.mjs?v=catalogo2"></script></body></html>

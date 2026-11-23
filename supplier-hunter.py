@@ -17,8 +17,14 @@ SOURCES = [
     ("Cola-me", "PT", "https://www.colame.net/loja/", "a.woocommerce-LoopProduct-link, a.woocommerce-loop-product__link"),
     ("Sublimet", "ES", "https://www.sublimet.com/es/productos-nuevos/", ".product-title a, .product-miniature h2 a, .product-miniature h3 a"),
     ("Brildor", "ES", "https://www.brildor.com/pt/novidades", ".product-item-link, .product-item-name a"),
+    ("Brildor", "ES", "https://www.brildor.com/pt/personalizaveis", ".product-item-link, .product-item-name a"),
+    ("Brildor", "ES", "https://www.brildor.com/pt/personalizaveis/paineis-sublimacao/madeira", ".product-item-link, .product-item-name a"),
 ]
 PRODUCTS = [
+    (r"fotopain|ard[oó]sia|moldura|lumin[aá]ria|\bled\b|luz noturna", "Cria uma peça fotográfica com dedicatória e uma opção com embalagem de oferta", "Famílias, escolas e associações", ""),
+    (r"puzzle|quebra.cabe|jogo|domin[oó]", "Transforma uma fotografia ou ilustração original num jogo personalizado", "Escolas, famílias e eventos", ""),
+    (r"corti[cç]a|madeira|bambu|\bmdf\b|t[aá]bua|placa|acr[ií]lic", "Prepara uma coleção de placas de porta, marcadores de mesa ou peças de reconhecimento para equipas", "Empresas, eventos e associações", ""),
+    (r"lancheir|estojo|necessaire|marmita|organizador|porta.cart[oõ]es|guarda.chuva", "Mostra uma versão com nome e outra com identidade visual para encomendas de equipa", "Empresas, escolas e comércio", ""),
     (r"natal|navidad|advento", "Enfeite ou presente de Natal com nome e ano", "Famílias e empresas", "Natal"),
     (r"camiset|t-shirt|avental|delantal|sweat|gorro|bon[eé]", "Identidade da equipa à frente e nome na manga, por DTF têxtil conforme o tecido", "Equipas, comércio e associações", ""),
     (r"caneca|taza|ch[aá]vena|garrafa|botella|vaso|copo", "Nome e grafismo a condizer com a campanha; confirmar revestimento e técnica", "Empresas, famílias e eventos", ""),
@@ -57,6 +63,10 @@ def permitted(url):
     return robots.can_fetch(AGENT, url)
 
 
+def product_family(name):
+    return next((index for index, row in enumerate(PRODUCTS) if re.search(row[0], name, re.I)), len(PRODUCTS))
+
+
 def records(supplier, country, source, selector, season):
     if not permitted(source):
         raise ValueError("robots.txt restringe esta página")
@@ -69,7 +79,7 @@ def records(supplier, country, source, selector, season):
         raise ValueError("página sem fichas de produto legíveis")
     items = []
     seen = set()
-    for anchor in anchors[:100]:
+    for anchor in anchors[:150]:
         href = urljoin(source, anchor.get("href", ""))
         original = urlsplit(source)
         target = urlsplit(href)
@@ -78,6 +88,10 @@ def records(supplier, country, source, selector, season):
         href = target._replace(query="", fragment="").geturl()
         price_area = anchor.find_parent(class_=re.compile(r"product-thumb|product-miniature|product-item-info")) or anchor
         price = PRICE.search(price_area.get_text(" ", strip=True))
+        image = price_area.select_one("img.product-image-photo, img.attachment-woocommerce_thumbnail, img")
+        image_url = urljoin(source, (image.get("data-src") or image.get("src") or "") if image else "")
+        if urlsplit(image_url).scheme != "https" or image_url == source:
+            image_url = ""
         name_node = anchor.select_one(".woocommerce-loop-product__title, h2, h3")
         name = (name_node or anchor).get_text(" ", strip=True)
         name = unicodedata.normalize("NFC", name).strip()
@@ -93,18 +107,10 @@ def records(supplier, country, source, selector, season):
         if match[3] == "Natal" and "Natal" not in season:
             continue
         seen.add(href)
-        photo = price_area.select_one("img")
-        image_url = urljoin(source, (photo.get("data-src") or photo.get("src") or "") if photo else "")
-        image_parts = urlsplit(image_url)
-        image_url = image_url if image_parts.scheme == "https" and image_parts.path != original.path else ""
-        ref_node = price_area.select_one("[itemprop=sku], [data-product-sku], .sku, .reference")
-        sku = (ref_node.get("data-product-sku") or ref_node.get("content") or ref_node.get_text(strip=True)) if ref_node else ""
-        if not sku:
-            ref = re.search(r"\bRef[.:]\s*([\w-]{3,40})", price_area.get_text(" ", strip=True), re.I)
-            sku = ref.group(1) if ref else ""
         items.append({
-            "name": name, "sku": sku, "photoUrl": image_url, "supplier": supplier, "country": country, "url": href,
+            "name": name, "supplier": supplier, "country": country, "url": href,
             "season": match[3] or season, "idea": match[1], "audience": match[2],
+            "image": image_url,
             "buyPrice": (price.group().strip() + " no catálogo") if price else "Consultar ficha",
             "sellPrice": "A calcular após portes e personalização",
             "recommendation": "Faz uma amostra e abre pré-encomendas para a campanha " + (match[3] or season) + ".",
@@ -116,57 +122,81 @@ def identity(item):
     return item["supplier"], " ".join(re.findall(r"\w+", item["name"].casefold()))
 
 
+def select_edition(candidates, previous, today, limit=16):
+    available = {item["url"]: item for item in candidates}
+    first_seen = previous.get("seen", {})
+    last_shown = dict(previous.get("lastShown", {}))
+    for item in previous.get("items", []):
+        last_shown.setdefault(item["url"], previous.get("date", ""))
+    selected = []
+    names = set()
+    counts = {}
+    families = {}
+
+    def add(item):
+        selected.append(item)
+        names.add(identity(item))
+        supplier = item["supplier"]
+        family = product_family(item["name"])
+        counts[supplier] = counts.get(supplier, 0) + 1
+        families[family] = families.get(family, 0) + 1
+
+    if previous.get("date") == today:
+        for item in previous.get("items", []):
+            current = available.get(item["url"])
+            if current and identity(current) not in names and len(selected) < limit:
+                add(current)
+
+    current_urls = {entry["url"] for entry in selected}
+    remaining = [item for item in candidates if item["url"] not in current_urls]
+    while len(selected) < limit:
+        eligible = [item for item in remaining if identity(item) not in names]
+        if not eligible:
+            break
+        item = min(eligible, key=lambda entry: (
+            last_shown.get(entry["url"], ""),
+            counts.get(entry["supplier"], 0),
+            families.get(product_family(entry["name"]), 0),
+            first_seen.get(entry["url"], today) != today,
+            entry["name"].casefold(),
+            entry["url"],
+        ))
+        add(item)
+    last_shown.update((item["url"], today) for item in selected)
+    return selected, last_shown
+
+
 def main():
     now = datetime.now(ZoneInfo("Europe/Lisbon"))
     target = Path("oportunidades-diarias.json")
     previous = json.loads(target.read_text()) if target.exists() else {}
     seen = previous.get("seen", {})
     today = now.date().isoformat()
-    candidates = []
-    stats = []
+    available = {}
+    summaries = {}
     for supplier, country, url, selector in SOURCES:
+        summary = summaries.setdefault(supplier, {"supplier": supplier, "country": country,
+            "checked": False, "pagesChecked": 0, "pagesUnavailable": 0})
         try:
             items = records(supplier, country, url, selector, campaign(now.month))
-            stats.append({"supplier": supplier, "country": country, "checked": True, "found": len(items)})
-            candidates.extend(items)
+            summary["checked"] = True
+            summary["pagesChecked"] += 1
+            for item in items:
+                available.setdefault(item["url"], item)
         except (requests.RequestException, ValueError) as error:
-            stats.append({"supplier": supplier, "country": country, "checked": False, "found": 0})
-            print(f"{supplier}: {error}", flush=True)
-    # Publish a first edition and then prefer newly detected listings without claiming launch dates.
-    available = {item["url"]: item for item in candidates}
-    checked = {source["supplier"] for source in stats if source["checked"]}
-    current = []
-    used_names = set()
-    if previous.get("date") == today:
-        for item in previous.get("items", []):
-            name_key = identity(item)
-            still_available = item["url"] in available or item["supplier"] not in checked
-            if still_available and name_key not in used_names and not EXCLUDE.search(item["name"]):
-                current.append(available.get(item["url"], item))
-                used_names.add(name_key)
-    current_urls = {item["url"] for item in current}
-    fresh = [item for item in candidates if seen.get(item["url"], today) == today and item["url"] not in current_urls]
-    fresh.sort(key=lambda item: (item["season"] != "Natal", item["supplier"].lower(), item["name"].lower()))
-    count = {}
-    selected = list(current)
-    for item in selected:
-        count[item["supplier"]] = count.get(item["supplier"], 0) + 1
-    for item in fresh:
-        if len(selected) >= 10:
-            break
-        supplier = item["supplier"]
-        if count.get(supplier, 0) >= 3 or identity(item) in used_names:
-            continue
-        selected.append(item)
-        used_names.add(identity(item))
-        count[supplier] = count.get(supplier, 0) + 1
+            summary["pagesUnavailable"] += 1
+            print(f"{supplier} · {url}: {error}", flush=True)
+    candidates = list(available.values())
+    stats = list(summaries.values())
+    for source in stats:
+        source["found"] = sum(item["supplier"] == source["supplier"] for item in candidates)
+    if not candidates and previous.get("items"):
+        print("Nenhum produto confirmado hoje. A última edição continua disponível.", flush=True)
+        return
+    selected, last_shown = select_edition(candidates, previous, today)
     for item in candidates:
         seen.setdefault(item["url"], today)
-    catalogue = {key: value for key, value in previous.get("catalogue", {}).items()
-                 if value.get("date", "") >= str(now.date().fromordinal(now.date().toordinal() - 30))}
-    for item in candidates:
-        catalogue[item["url"]] = {**{key: item[key] for key in ("name", "sku", "photoUrl", "supplier", "buyPrice")}, "date": today}
-    today_edition = {"date": today, "items": selected, "sources": stats, "seen": seen, "catalogue": catalogue}
+    today_edition = {"date": today, "items": selected, "sources": stats, "seen": seen, "lastShown": last_shown}
     target.write_text(json.dumps(today_edition, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"date": today, "selected": len(selected), "sources": stats}))
 

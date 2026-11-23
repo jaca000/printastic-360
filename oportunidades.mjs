@@ -1,7 +1,13 @@
 const get = id => document.getElementById(id)
 const key = 'printastic360-opportunities-v1'
 const status = get('status')
-const editions = JSON.parse(localStorage.getItem(key) ?? '{}')
+let editions = {}
+try {
+  editions = JSON.parse(localStorage.getItem(key) ?? '{}') ?? {}
+} catch {
+  // An unusable local archive must not prevent loading the latest edition.
+}
+const queryKey = value => value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLocaleLowerCase('pt-PT')
 const fields = ['name','supplier','country','url','season','idea','audience','buyPrice','sellPrice','recommendation']
 
 function verifiedUrl(value) {
@@ -15,13 +21,27 @@ function verifiedUrl(value) {
 }
 
 function show(date) {
-  const entries = editions[date]
+  const supplier = get('supplier').value
+  const query = queryKey(get('opportunity-search').value.trim())
+  const entries = (editions[date] ?? []).filter(item => (!supplier || item.supplier === supplier) &&
+    queryKey([item.name, item.idea, item.audience, item.season].join(' ')).includes(query))
   get('results').replaceChildren(...entries.map(item => {
     const card = document.createElement('article')
     const subtitle = document.createElement('small')
     subtitle.textContent = item.country + ' · ' + item.supplier + ' · ' + item.season
     const heading = document.createElement('h2')
     heading.textContent = item.name
+    const imageUrl = verifiedUrl(item.image)
+    if (imageUrl) {
+      const image = document.createElement('img')
+      image.className = 'product-image'
+      image.alt = ''
+      image.loading = 'lazy'
+      image.referrerPolicy = 'no-referrer'
+      image.onerror = () => image.remove()
+      image.src = imageUrl
+      card.append(image)
+    }
     card.append(subtitle, heading)
     for (const value of [item.idea, 'Público · ' + item.audience, 'Compra · ' + item.buyPrice + ' | Venda · ' + item.sellPrice, item.recommendation]) {
       const paragraph = document.createElement('p')
@@ -38,27 +58,34 @@ function show(date) {
   }))
   status.textContent = entries.length
     ? date + ' · ' + entries.length + ' oportunidades'
-    : date + ' · Sem oportunidades verificadas nesta edição.'
+    : date + ' · Sem oportunidades para estes filtros.'
 }
 
 function refresh(date) {
   const dates = Object.keys(editions).sort().reverse()
   get('edition').replaceChildren(...dates.map(value => new Option(value, value)))
   get('edition').value = date
-  get('archive').hidden = false
+  get('opportunity-tools').hidden = false
+  selectEdition(date)
+}
+
+function selectEdition(date) {
+  const filter = get('supplier')
+  const suppliers = [...new Set((editions[date] ?? []).map(item => item.supplier))].sort()
+  filter.replaceChildren(new Option('Todos os fornecedores', ''), ...suppliers.map(value => new Option(value)))
   show(date)
 }
 
-function importReport(text) {
+function saveEdition(text) {
   try {
     if (text.length > 200000) throw new Error('O relatório é demasiado grande.')
     const {date, items} = JSON.parse(text.trim().replace(/^```(?:json)?\s*|\s*```$/gi, ''))
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Array.isArray(items) || items.length > 10 ||
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Array.isArray(items) || items.length > 16 ||
         !items.every(item => item && fields.every(field => typeof item[field] === 'string') &&
           ['PT','ES'].includes(item.country) && verifiedUrl(item.url)))
       throw new Error('Formato inválido. Usa o JSON da edição do Product Hunter.')
     const next = {...editions, [date]: items}
-    localStorage.setItem(key, JSON.stringify(next))
+    try { localStorage.setItem(key, JSON.stringify(next)) } catch {}
     editions[date] = items
     refresh(date)
   } catch (error) {
@@ -66,18 +93,9 @@ function importReport(text) {
   }
 }
 
-get('file').onchange = async event => {
-  const file = event.target.files[0]
-  if (!file) return
-  if (file.size > 200000) {
-    status.textContent = 'O relatório é demasiado grande.'
-    return
-  }
-  importReport(await file.text())
-  event.target.value = ''
-}
-get('paste').onclick = () => importReport(get('pasted').value)
-get('edition').onchange = event => show(event.target.value)
+get('edition').onchange = event => selectEdition(event.target.value)
+get('supplier').onchange = () => show(get('edition').value)
+get('opportunity-search').oninput = () => show(get('edition').value)
 const latest = Object.keys(editions).sort().at(-1)
 if (latest) refresh(latest)
 
@@ -90,8 +108,8 @@ async function loadDaily() {
     if (!response.ok) throw new Error('Edição indisponível')
     const report = await response.json()
     if (!Array.isArray(report.sources)) throw new Error('Edição inválida')
-    importReport(JSON.stringify({ date: report.date, items: report.items }))
-    const available = report.sources.filter(source => source.checked).map(source => source.supplier)
+    saveEdition(JSON.stringify({ date: report.date, items: report.items }))
+    const available = report.sources.filter(source => source.checked).map(source => source.supplier + (source.found != null ? ' (' + source.found + ')' : ''))
     const unavailable = report.sources.filter(source => !source.checked).map(source => source.supplier)
     indicator.textContent = 'Pesquisa automática · ' + report.date +
       ' · Verificados: ' + (available.join(', ') || 'nenhum') +
