@@ -363,13 +363,22 @@ function start() {
       return { imported, duplicates, invalid }
     } else if (path === '/clients') {
       records.clients ??= []
-      for (const key of ['id', 'name', 'email', 'phone', 'tax', 'address', 'notes']) data[key] = data[key].trim()
+      for (const key of clientFields) data[key] = String(data[key] ?? '').trim()
       if (!data.name) throw new Error('Indica o nome do cliente.')
-      const duplicate = records.clients.some(item => item.id !== data.id && item.name.toLocaleLowerCase('pt') === data.name.toLocaleLowerCase('pt'))
-      if (duplicate) throw new Error('Já existe uma ficha com este nome.')
-      const index = records.clients.findIndex(item => item.id === data.id)
-      if (index < 0) records.clients.push({ ...data, id: crypto.randomUUID() })
-      else records.clients[index] = { ...records.clients[index], ...data }
+      const duplicate = records.clients.some(item => item.id !== data.id && clientKey(item.name) === clientKey(data.name))
+      if (duplicate) throw new Error('Já existe uma ficha com este nome, incluindo entre as fichas apagadas.')
+      const client = records.clients.find(item => item.id === data.id && !item.archivedAt)
+      if (data.id && !client) throw new Error('Esta ficha já não está disponível para edição.')
+      if (client) {
+        if (clientKey(client.name) !== clientKey(data.name))
+          client.previousNames = [...new Set([...(client.previousNames ?? []), client.name])]
+        Object.assign(client, data)
+      } else records.clients.push({ ...data, id: crypto.randomUUID() })
+    } else if (path === '/client-archive') {
+      const client = records.clients?.find(item => item.id === data.id)
+      if (!client) throw new Error('Ficha de cliente indisponível.')
+      if (data.archived) client.archivedAt ??= new Date().toISOString()
+      else delete client.archivedAt
     } else if (path === '/order-state') {
       advanceOrder(records, data.reference, data.action, new Date().toISOString())
     } else if (path === '/invoice-status') {
@@ -473,7 +482,9 @@ function start() {
     productionLines = []
     savedClients = []
     clearProductLookup()
+    element('client-dialog').close()
     element('client-form').reset()
+    element('client-search-form').reset()
     element('odoo-form').reset()
     element('odoo-result').textContent = ''
     for (const id of ['client-list', 'report-metrics', 'report-list']) element(id).replaceChildren()
@@ -833,7 +844,9 @@ function start() {
   function renderSales(next) {
     if (next !== 'quotes' && next !== 'orders') return
     const quote = next === 'quotes'
-    const clients = new Set([...savedClients.map(client => client.name), ...savedSales.map(sale => sale.customer)])
+    const inactive = new Set(savedClients.filter(client => client.archivedAt).flatMap(client => [client.name, ...(client.previousNames ?? [])]).map(clientKey))
+    const clients = new Set([...savedClients.filter(client => !client.archivedAt).map(client => client.name),
+      ...savedSales.map(sale => sale.customer).filter(name => !inactive.has(clientKey(name)))])
     element('clients').replaceChildren(...[...clients].sort().map(client => new Option(client)))
     element('order-tools').hidden = quote
     const count = element('order-count')
@@ -1083,27 +1096,60 @@ function start() {
     }, 'Importação concluída.')
   }
 
+  const clientFields = ['id', 'name', 'email', 'phone', 'tax', 'address', 'notes']
   const clientForm = element('client-form')
+  const clientDialog = element('client-dialog')
+  const clientSearch = element('client-search')
+  const archivedClients = element('client-archived')
+
+  function openClient(client) {
+    clientForm.reset()
+    element('client-dialog-title').textContent = client ? 'Editar ficha' : 'Novo cliente'
+    for (const name of clientFields) clientForm.elements[name].value = client?.[name] ?? ''
+    clientDialog.showModal()
+    clientForm.elements.name.focus()
+  }
+
+  element('new-client').onclick = () => openClient()
+  element('close-client').onclick = () => clientDialog.close()
+  element('client-search-form').onsubmit = event => {
+    event.preventDefault()
+    renderClients()
+  }
+  clientSearch.oninput = renderClients
+  archivedClients.onchange = renderClients
   clientForm.onsubmit = event => {
     event.preventDefault()
     run(async () => {
       await api('/clients', Object.fromEntries(new FormData(clientForm)))
-      clientForm.reset()
+      clientDialog.close()
       await refresh()
     }, 'Ficha de cliente guardada.')
   }
 
   function renderClients() {
-    list('client-list', [...savedClients].sort((a, b) => a.name.localeCompare(b.name, 'pt')), 'Ainda não há clientes.', client => {
+    const terms = orderSearchKey(clientSearch.value.trim()).split(/\s+/).filter(Boolean)
+    const clients = savedClients.filter(client => {
+      if (Boolean(client.archivedAt) !== archivedClients.checked) return false
+      const text = orderSearchKey([client.name, client.email, client.tax, client.phone,
+        String(client.phone ?? '').replace(/\D/g, '')].join(' '))
+      return terms.every(term => text.includes(term))
+    }).sort((a, b) => a.name.localeCompare(b.name, 'pt'))
+    element('client-count').textContent = clients.length + (clients.length === 1 ? ' ficha' : ' fichas')
+    list('client-list', clients, 'Nenhuma ficha encontrada.', client => {
       const card = node('article', '')
       card.tabIndex = -1
       card.dataset.clientId = String(client.id)
       card.append(node('strong', client.name))
       for (const value of [client.email, client.phone, client.tax && 'NIF ' + client.tax, client.address])
         if (value) card.append(node('p', value))
-      card.append(button('Editar ficha', () => {
-        for (const name of ['id', 'name', 'email', 'phone', 'tax', 'address', 'notes']) clientForm.elements[name].value = client[name]
-        clientForm.elements.name.focus()
+      if (!client.archivedAt) card.append(button('Editar ficha', () => openClient(client)), ' ')
+      card.append(button(client.archivedAt ? 'Recuperar ficha' : 'Apagar ficha', () => {
+        if (!client.archivedAt && !confirm('Apagar a ficha de ' + client.name + '? Podes recuperá-la em Mostrar fichas apagadas.')) return
+        run(async () => {
+          await api('/client-archive', { id: client.id, archived: !client.archivedAt })
+          await refresh()
+        }, client.archivedAt ? 'Ficha recuperada.' : 'Ficha apagada da lista de clientes.')
       }))
       return card
     })
@@ -1242,7 +1288,8 @@ function start() {
     const byClient = new Map()
     const sales = new Map([...savedOrderHistory, ...savedSales.filter(sale => sale.kind === 'order')]
       .map(sale => [clientKey(sale.reference), sale]))
-    const idsByName = new Map(savedClients.map(client => [clientKey(client.name), client.id]))
+    const idsByName = new Map(savedClients.flatMap(client => (client.previousNames ?? []).map(name => [clientKey(name), client.id])))
+    for (const client of savedClients) idsByName.set(clientKey(client.name), client.id)
     for (const sale of sales.values()) {
       const date = String(sale.createdAt ?? '').slice(0, 10)
       if (!validDay(date) || date > currentDate) continue
@@ -1254,6 +1301,7 @@ function start() {
 
     const alerts = []
     for (const client of savedClients) {
+      if (client.archivedAt) continue
       const history = (byClient.get(client.id) ?? []).sort((a, b) => b.date.localeCompare(a.date))
       if (!history.length) continue
       const latest = history[0]

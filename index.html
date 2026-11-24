@@ -60,8 +60,10 @@
   .sales-lines { grid-column:1/-1; display:grid; gap:8px }
   .sales-line { display:grid; grid-template-columns:2fr 1fr 1fr auto; align-items:end; gap:10px; padding:12px; border:1px solid #d5e3f2; border-radius:12px }
   .sales-line button { background:#edf4ff; color:#0755ba }
-  #payment-dialog { border:1px solid #d5e3f2; border-radius:16px; background:white; color:#182747; padding:24px }
-  #payment-dialog::backdrop { background:#142c5c66 }
+  #client-search-form { margin:12px 0 }
+  #client-dialog { width:min(42rem, calc(100% - 24px)); max-height:90dvh; overflow:auto }
+  #client-dialog, #payment-dialog { border:1px solid #d5e3f2; border-radius:16px; background:white; color:#182747; padding:24px }
+  #client-dialog::backdrop, #payment-dialog::backdrop { background:#142c5c66 }
   .product-photo { width:92px; aspect-ratio:1; object-fit:cover; border-radius:12px; display:block; margin-bottom:12px }
   #report-list article { margin-top:8px }
   #report-metrics { margin-top:16px }
@@ -196,6 +198,17 @@
 <div id="clients-area" hidden>
   <section>
     <h2>Clientes</h2>
+    <button id="new-client" type="button">+ Novo cliente</button>
+    <form id="client-search-form" role="search">
+      <label>Pesquisar clientes<input id="client-search" type="search" placeholder="Nome, empresa, NIF, e-mail ou telefone"></label>
+      <button>Pesquisar</button>
+      <label><input id="client-archived" type="checkbox"> Mostrar fichas apagadas</label>
+    </form>
+    <p id="client-count" role="status"></p>
+    <div id="client-list"></div>
+  </section>
+  <dialog id="client-dialog" aria-labelledby="client-dialog-title">
+    <h2 id="client-dialog-title">Novo cliente</h2>
     <form id="client-form">
       <input type="hidden" name="id">
       <label>Nome ou empresa<input name="name" required maxlength="180"></label>
@@ -204,16 +217,15 @@
       <label>NIF<input name="tax" maxlength="30"></label>
       <label>Morada<input name="address" maxlength="240"></label>
       <label>Observações<input name="notes" maxlength="500"></label>
-      <button>Guardar cliente</button><button type="reset">Nova ficha</button>
+      <button>Guardar cliente</button><button id="close-client" type="button">Cancelar</button>
     </form>
-  </section>
+  </dialog>
   <section><h2>Importar clientes do Odoo</h2>
     <form id="odoo-form">
       <label>Ficheiro CSV<input name="csv" type="file" accept=".csv,text/csv" required></label>
       <button>Importar clientes</button>
     </form><p id="odoo-result" role="status"></p>
   </section>
-  <section><h2>Lista de clientes</h2><div id="client-list"></div></section>
 </div>
 <div id="reports-area" hidden>
   <section><h2>Relatório de encomendas</h2>
@@ -303,5 +315,5 @@
 </div>
 
 </div>
-<script type="module" src="./sync.mjs?v=orders-1"></script>
+<script type="module" src="./sync.mjs?v=clients-1"></script>
 </html>
