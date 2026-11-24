@@ -485,6 +485,7 @@ function start() {
     element('client-dialog').close()
     element('client-form').reset()
     element('client-search-form').reset()
+    element('product-search-form').reset()
     element('odoo-form').reset()
     element('odoo-result').textContent = ''
     for (const id of ['client-list', 'report-metrics', 'report-list']) element(id).replaceChildren()
@@ -1448,7 +1449,24 @@ function start() {
       return card
     })
 
-    list('catalog', products, 'Nenhum produto registado.', product => {
+    renderCatalog()
+  }
+
+  const productSearch = element('product-search')
+  element('product-search-form').onsubmit = event => {
+    event.preventDefault()
+    renderCatalog()
+  }
+  productSearch.oninput = renderCatalog
+
+  function renderCatalog() {
+    const terms = orderSearchKey(productSearch.value).trim().split(/\s+/).filter(Boolean)
+    const products = productsForProfit.filter(product => {
+      const text = orderSearchKey([product.name, product.sku, product.supplier].join(' '))
+      return terms.every(term => text.includes(term))
+    })
+    element('product-count').textContent = products.length + (products.length === 1 ? ' produto' : ' produtos')
+    list('catalog', products, terms.length ? 'Nenhum produto corresponde à pesquisa.' : 'Nenhum produto registado.', product => {
       const card = node('article', '')
       if (product.photo?.startsWith('data:image/jpeg;base64,') || httpsUrl(product.photoUrl)) {
         const image = node('img', '')

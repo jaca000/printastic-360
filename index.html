@@ -60,7 +60,7 @@
   .sales-lines { grid-column:1/-1; display:grid; gap:8px }
   .sales-line { display:grid; grid-template-columns:2fr 1fr 1fr auto; align-items:end; gap:10px; padding:12px; border:1px solid #d5e3f2; border-radius:12px }
   .sales-line button { background:#edf4ff; color:#0755ba }
-  #client-search-form { margin:12px 0 }
+  #client-search-form, #product-search-form { margin:12px 0 }
   #client-dialog { width:min(42rem, calc(100% - 24px)); max-height:90dvh; overflow:auto }
   #client-dialog, #payment-dialog { border:1px solid #d5e3f2; border-radius:16px; background:white; color:#182747; padding:24px }
   #client-dialog::backdrop, #payment-dialog::backdrop { background:#142c5c66 }
@@ -193,7 +193,13 @@
         <button>Guardar produto</button>
       </form>
     </details>
-  <div id="catalog"></div></section>
+    <form id="product-search-form" role="search">
+      <label>Pesquisar produtos<input id="product-search" type="search" placeholder="Nome, referência ou fornecedor"></label>
+      <button>Pesquisar</button>
+    </form>
+    <p id="product-count" role="status"></p>
+    <div id="catalog"></div>
+  </section>
 </div>
 <div id="clients-area" hidden>
   <section>
@@ -315,5 +321,5 @@
 </div>
 
 </div>
-<script type="module" src="./sync.mjs?v=clients-1"></script>
+<script type="module" src="./sync.mjs?v=products-search-1"></script>
 </html>
