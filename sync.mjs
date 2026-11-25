@@ -414,6 +414,15 @@ function start() {
       const product = records.products.find(item => item.sku === data.sku)
       if (!product?.archived) throw new Error('Produto indisponível.')
       delete product.archived
+    } else if (path === '/product-stock') {
+      const product = records.products.find(item => item.sku === data.sku)
+      if (!product) throw new Error('Produto indisponível.')
+      if (Number(product.stock) !== data.previousStock || (product.unit ?? 'piece') !== data.unit)
+        throw new Error('O stock ou a unidade mudaram. Fecha e volta a abrir o produto.')
+      if (!Number.isFinite(data.stock) || data.stock < 0 || data.stock > 1000000 ||
+          roundQuantity(data.stock) !== data.stock || (data.unit === 'piece' && !Number.isInteger(data.stock)))
+        throw new Error('Indica um stock válido na unidade de venda do produto.')
+      product.stock = data.stock
     } else if (path === '/products') {
       if (!data.sku || !data.name || !data.supplier)
         throw new Error('Preenche a referência, o nome e o fornecedor.')
@@ -494,6 +503,7 @@ function start() {
     element('sales-list').replaceChildren()
     element('clients').replaceChildren()
     element('legacy-edit').hidden = true
+    element('stock-dialog').close()
     element('payment-dialog').close()
     element('payment-form').reset()
     paymentReference = undefined
@@ -1443,13 +1453,57 @@ function start() {
       if (product.url) link.href = product.url
       link.target = '_blank'
       link.rel = 'noopener noreferrer'
-      card.append(node('strong', formatQuantity(quantity, product.unit) + ' × ' + product.name),
+      const editStock = button(formatQuantity(quantity, product.unit) + ' × ' + product.name, () => openStock(product))
+      editStock.className = 'purchase-product'
+      editStock.title = 'Atualizar stock de ' + product.name
+      card.append(editStock,
         node('p', money.format(quantity * Number(product.cost)) + ' de custo estimado · Prazo ' +
           dateLabel.format(new Date(due))), link)
       return card
     })
 
     renderCatalog()
+  }
+
+  const stockDialog = element('stock-dialog')
+  const stockForm = element('stock-form')
+  const stockInput = stockForm.elements.stock
+  let stockProduct
+
+  function openStock(product) {
+    stockProduct = product
+    const unit = product.unit ?? 'piece'
+    element('stock-product').textContent = product.name
+    element('stock-current').textContent = 'Stock atual: ' + formatQuantity(Number(product.stock), unit)
+    element('stock-label').textContent = unit === 'meter' ? 'Novo stock total (m)' : 'Novo stock total (unidades)'
+    element('stock-error').textContent = ''
+    stockInput.step = unit === 'meter' ? '0.01' : '1'
+    stockInput.value = product.stock
+    stockDialog.showModal()
+    stockInput.focus()
+    stockInput.select()
+  }
+
+  element('cancel-stock').onclick = () => stockDialog.close()
+  stockDialog.onclose = () => { stockProduct = undefined }
+  stockForm.onsubmit = event => {
+    event.preventDefault()
+    const product = stockProduct
+    if (!product) return
+    run(async () => {
+      try {
+        await api('/product-stock', {
+          sku: product.sku, stock: stockInput.valueAsNumber,
+          previousStock: Number(product.stock), unit: product.unit ?? 'piece'
+        })
+      } catch (error) {
+        element('stock-error').textContent = error.message
+        throw error
+      }
+      stockDialog.close()
+      await refresh()
+      element('purchases-title').focus()
+    }, 'Stock atualizado.')
   }
 
   const productSearch = element('product-search')

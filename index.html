@@ -62,8 +62,8 @@
   .sales-line button { background:#edf4ff; color:#0755ba }
   #client-search-form, #product-search-form { margin:12px 0 }
   #client-dialog { width:min(42rem, calc(100% - 24px)); max-height:90dvh; overflow:auto }
-  #client-dialog, #payment-dialog { border:1px solid #d5e3f2; border-radius:16px; background:white; color:#182747; padding:24px }
-  #client-dialog::backdrop, #payment-dialog::backdrop { background:#142c5c66 }
+  #stock-dialog, #client-dialog, #payment-dialog { border:1px solid #d5e3f2; border-radius:16px; background:white; color:#182747; padding:24px }
+  #stock-dialog::backdrop, #client-dialog::backdrop, #payment-dialog::backdrop { background:#142c5c66 }
   .product-photo { width:92px; aspect-ratio:1; object-fit:cover; border-radius:12px; display:block; margin-bottom:12px }
   #report-list article { margin-top:8px }
   #report-metrics { margin-top:16px }
@@ -108,6 +108,7 @@
   .order-badge.ready, .order-badge.paid { background: #d8f8e9; color: #0d6042 }
   .order-badge.unpaid { background: #fff0d2; color: #7d4406 }
   .order-badge.closed { background: #e9edf4; color: #35435d }
+  #purchases .purchase-product { border:0; padding:0; background:transparent; color:var(--accent); text-align:left; text-decoration:underline; text-underline-offset:3px; font-weight:750 }
   #sales-list article button { margin:4px 8px 0 0 }
   #app-menu { flex-wrap:wrap }
   @media(max-width:590px) { .sales-line { grid-template-columns:1fr 1fr } .sales-line label:first-child { grid-column:1/-1 } }
@@ -166,8 +167,19 @@
   </div>
   <div class="columns">
     <section><h2>Fila de produção</h2><div id="queue"></div></section>
-    <section><h2>Compras necessárias</h2><div id="purchases"></div></section>
+    <section><h2 id="purchases-title" tabindex="-1">Compras necessárias</h2><div id="purchases"></div></section>
   </div>
+  <dialog id="stock-dialog" aria-labelledby="stock-title">
+    <h2 id="stock-title">Atualizar stock</h2>
+    <p id="stock-product"></p>
+    <p id="stock-current"></p>
+    <form id="stock-form">
+      <label><span id="stock-label">Novo stock total</span><input name="stock" type="number" min="0" max="1000000" required></label>
+      <button type="submit">Guardar stock</button>
+      <button id="cancel-stock" type="button">Cancelar</button>
+    </form>
+    <p id="stock-error" role="alert"></p>
+  </dialog>
 </main>
 <div id="products-area" hidden>
   <section><h2>Produtos</h2><p>Catálogo de artigos disponíveis para orçamentos e encomendas.</p>
@@ -321,5 +333,5 @@
 </div>
 
 </div>
-<script type="module" src="./sync.mjs?v=products-search-1"></script>
+<script type="module" src="./sync.mjs?v=purchase-stock-1"></script>
 </html>
