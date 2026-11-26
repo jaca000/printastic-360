@@ -639,6 +639,37 @@ function start() {
     const row = element('sales-line').content.firstElementChild.cloneNode(true)
     const select = row.querySelector('select')
     const price = row.querySelector('[name=price]')
+    const search = row.querySelector('[data-product-search]')
+    const results = row.querySelector('[data-product-results]')
+    const preview = row.querySelector('[data-product-preview]')
+    const showPhoto = () => {
+      const product = productsForProfit.find(item => item.sku === select.value)
+      const photo = product && productThumbnail(product)
+      preview.replaceChildren(...(photo ? [photo] : []))
+    }
+    search.oninput = () => {
+      const terms = searchTerms(search.value)
+      results.hidden = terms.length === 0
+      results.replaceChildren()
+      if (!terms.length) return
+      const matches = catalogue.filter(item => matchesTerms(terms, item.name, item.sku, item.supplier))
+      for (const item of matches.slice(0, 10)) {
+        const option = button(item.name + ' · ' + item.sku, () => {
+          if (select.value !== item.sku) {
+            select.value = item.sku
+            select.onchange()
+          }
+          search.value = ''
+          results.hidden = true
+          select.focus()
+        })
+        const photo = productThumbnail(item)
+        if (photo) option.prepend(photo)
+        results.append(option)
+      }
+      if (!matches.length) results.append(node('p', 'Nenhum produto encontrado.'))
+      else if (matches.length > 10) results.append(node('p', 'Refina a pesquisa para veres mais resultados.'))
+    }
     select.append(new Option('Selecionar produto', ''), ...catalogue.map(item => new Option(item.name, item.sku)))
     select.onchange = () => {
       const item = catalogue.find(product => product.sku === select.value)
@@ -647,6 +678,7 @@ function start() {
       row.querySelector('[data-price-label]').textContent = byMeter ? 'Preço por metro (€)' : 'Preço unitário (€)'
       row.querySelector('[name=quantity]').value = byMeter ? '100' : '1'
       price.value = item?.sell === '' || item?.sell == null ? '' : String(item.sell)
+      showPhoto()
       salesTotal()
     }
     if (line) {
@@ -672,6 +704,7 @@ function start() {
     const quote = next === 'quotes'
     editingSale = undefined
     salesForm.reset()
+    suggestSaleClients()
     salesForm.elements.reference.readOnly = false
     element('cancel-order-edit').hidden = true
     element('sales-lines').replaceChildren()
@@ -841,6 +874,23 @@ function start() {
   const orderSearchKey = value => String(value ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '')
     .toLocaleLowerCase('pt-PT')
 
+  const searchTerms = value => orderSearchKey(value).trim().split(/\s+/).filter(Boolean)
+  function matchesTerms(terms, ...values) {
+    const text = orderSearchKey(values.join(' '))
+    return terms.every(term => text.includes(term))
+  }
+
+  function productThumbnail(product) {
+    const url = product.photo?.startsWith('data:image/jpeg;base64,') ? product.photo : httpsUrl(product.photoUrl)
+    if (!url) return null
+    const photo = node('img', '')
+    photo.src = url
+    photo.alt = ''
+    photo.loading = 'lazy'
+    photo.referrerPolicy = 'no-referrer'
+    return photo
+  }
+
   function sortOrders(a, b, sort) {
     const deadline = () => (a.due || '9999').localeCompare(b.due || '9999')
     const recent = () => String(b.createdAt ?? '').localeCompare(String(a.createdAt ?? ''))
@@ -858,16 +908,19 @@ function start() {
     const inactive = new Set(savedClients.filter(client => client.archivedAt).flatMap(client => [client.name, ...(client.previousNames ?? [])]).map(clientKey))
     const clients = new Set([...savedClients.filter(client => !client.archivedAt).map(client => client.name),
       ...savedSales.map(sale => sale.customer).filter(name => !inactive.has(clientKey(name)))])
-    element('clients').replaceChildren(...[...clients].sort().map(client => new Option(client)))
+    saleClientNames = [...clients].sort((a, b) => a.localeCompare(b, 'pt-PT'))
+    suggestSaleClients()
     element('order-tools').hidden = quote
     const count = element('order-count')
     count.hidden = quote
     const filter = element('order-filter').value
+    const paymentFilter = element('order-payment').value
     const terms = orderSearchKey(element('order-search').value).trim().split(/\s+/).filter(Boolean)
     const openOrders = new Set([...element('sales-list').children]
       .filter(card => card.querySelector('.order-details[open]')).map(card => card.dataset.orderReference))
     const sales = savedSales.filter(sale => sale.kind === (quote ? 'quote' : 'order') &&
-      (quote || filter === 'all' || (filter === 'active' ? !sale.closedAt : currentOrderState(sale) === filter))).reverse()
+      (quote || ((filter === 'all' || (filter === 'active' ? !sale.closedAt : currentOrderState(sale) === filter)) &&
+        (!paymentFilter || (paymentFilter === 'outstanding' ? paymentState(sale) !== 'paid' : paymentState(sale) === paymentFilter))))).reverse()
     if (!quote) {
       const sort = element('order-sort').value
       sales.sort((a, b) => sortOrders(a, b, sort))
@@ -985,14 +1038,25 @@ function start() {
         }
         invoice.append(label, numberLabel, saveInvoice)
         card.querySelector('.order-summary').append(badges)
-        actions.append(invoice, node('p', 'Pago ' + money.format(paid / 100) + ' · Por pagar ' + money.format((total - paid) / 100)))
+        const balance = Math.max(0, total - paid)
+        const amounts = node('span', '')
+        amounts.className = 'order-balance'
+        const outstanding = node('span', balance ? 'Falta receber ' + money.format(balance / 100) : 'Sem valor por receber')
+        outstanding.className = balance ? 'outstanding' : 'settled'
+        amounts.append(node('span', 'Recebido ' + money.format(paid / 100)), outstanding)
+        card.querySelector('.order-summary').append(amounts)
+        actions.append(invoice)
         for (const item of sale.payments ?? []) {
           details.append(node('p', item.date + ' · ' + item.method + ' · ' + money.format(item.amount / 100)))
         }
         if (sale.closedAt) details.append(node('p', 'Fechada em ' + dateLabel.format(new Date(sale.closedAt))))
         if (state === 'pending') actions.append(orderAction(sale, 'Iniciar produção', 'start', 'Encomenda em produção.'))
         if (state === 'pending' || state === 'producing') actions.append(orderAction(sale, 'Marcar como pronta', 'ready', 'Encomenda pronta. Stock atualizado.'))
-        if (state !== 'closed' && paid < total) actions.append(button('Registar pagamento', () => openPayment(sale)))
+        if (state !== 'closed' && balance > 0) {
+          const collect = button('Registar pagamento', () => openPayment(sale))
+          collect.className = 'order-collect'
+          card.append(collect)
+        }
         if (state === 'ready' && payment === 'paid') actions.append(orderAction(sale, 'Fechar encomenda', 'close', 'Encomenda fechada. Disponível no histórico e nos relatórios.'))
       }
       if (!quote && !(sale.closedAt && paymentState(sale) === 'paid'))
@@ -1020,6 +1084,26 @@ function start() {
   }
 
   element('order-filter').onchange = () => renderSales('orders')
+  element('order-payment').onchange = () => renderSales('orders')
+  let saleClientNames = []
+  function suggestSaleClients() {
+    const terms = searchTerms(salesForm.elements.customer.value)
+    const results = element('clients')
+    const customer = salesForm.elements.customer
+    const matches = terms.length ? saleClientNames.filter(name => matchesTerms(terms, name)) : []
+    const exact = matches.length === 1 && matches[0] === customer.value
+    results.hidden = !terms.length || exact
+    results.replaceChildren(...matches.slice(0, 10).map(name => button(name, () => {
+      customer.value = name
+      customer.focus()
+      results.hidden = true
+    })))
+    if (terms.length && !matches.length)
+      results.append(node('p', 'Nenhum cliente encontrado. Podes usar o nome que escreveste.'))
+    else if (matches.length > 10) results.append(node('p', 'Escreve mais para refinar a pesquisa.'))
+  }
+  salesForm.elements.customer.addEventListener('input', suggestSaleClients)
+  salesForm.elements.customer.addEventListener('focus', suggestSaleClients)
   element('order-sort').onchange = () => renderSales('orders')
   element('order-search').oninput = () => renderSales('orders')
   element('add-line').onclick = () => addSaleLine()
@@ -1266,6 +1350,7 @@ function start() {
       card.append(title, node('p', sale.reference + ' · ' + sale.customer + ' · ' +
         dateLabel.format(new Date(sale.due))), button('Ver encomenda', () => {
         element('order-filter').value = 'active'
+        element('order-payment').value = ''
         element('order-search').value = ''
         selectView('orders')
         const orderCard = [...element('sales-list').children]

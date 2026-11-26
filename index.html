@@ -68,7 +68,17 @@
   #report-list article { margin-top:8px }
   #report-metrics { margin-top:16px }
   #sales-total { align-self:center }
-  #order-tools { display:grid; grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr)); gap:12px; align-items:end; margin-bottom:12px }
+  #order-tools { display:grid; grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr)); gap:12px; align-items:end; margin-bottom:12px }
+  .sale-client-results { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:6px }
+  .sale-client-results[hidden] { display:none }
+  .sale-product { min-width:0; display:grid; gap:6px }
+  .sale-product [data-product-results] { max-height:220px; overflow:auto }
+  .sale-product [data-product-results] button { display:flex; align-items:center; gap:8px; text-align:left; width:100%; margin:3px 0 }
+  .sale-product img { width:44px; height:44px; object-fit:contain; border-radius:6px }
+  #sales-list .order-balance { display:flex; flex-wrap:wrap; gap:6px 16px; grid-column:1/-1; font-size:.9rem }
+  .order-balance .outstanding { color:#823f08; font-weight:750 }
+  .order-balance .settled { color:#0d6042; font-weight:750 }
+  #sales-list .order-collect { margin-top:8px }
   #order-tools[hidden], #order-count[hidden] { display:none }
   #order-count { margin:0 0 12px; font-size:13px }
   #sales-list .order-details { padding:0; margin:0; border:0; box-shadow:none; background:transparent }
@@ -271,8 +281,8 @@
     <summary id="sales-title">Nova encomenda</summary>
     <form id="sales-form" class="sales-form">
       <label>Referência<input name="reference" required maxlength="120"></label>
-      <label>Cliente<input name="customer" required maxlength="180" list="clients"></label>
-      <datalist id="clients"></datalist>
+      <label>Cliente<input name="customer" required maxlength="180" autocomplete="off" placeholder="Escreve para pesquisar clientes"></label>
+      <div id="clients" class="sale-client-results" aria-label="Clientes encontrados" hidden></div>
       <label>Prazo de entrega<input name="due" type="date" required></label>
       <label>Observações<input name="notes" maxlength="1500"></label>
       <div class="sales-lines" id="sales-lines"></div>
@@ -284,7 +294,12 @@
     </form>
     <template id="sales-line">
       <div class="sales-line">
-        <label>Produto<select name="sku" required></select></label>
+        <div class="sale-product">
+          <label>Pesquisar produto<input type="search" data-product-search placeholder="Nome, referência ou fornecedor"></label>
+          <div data-product-results hidden></div>
+          <label>Produto<select name="sku" required></select></label>
+          <div data-product-preview></div>
+        </div>
         <label><span data-quantity-label>Quantidade</span><input name="quantity" type="number" min="1" max="1000000" value="1" required></label>
         <label><span data-price-label>Preço unitário (€)</span><input name="price" inputmode="decimal" required></label>
         <button type="button" data-remove>Retirar</button>
@@ -295,6 +310,7 @@
     <div id="order-tools">
       <label>Pesquisar encomendas<input id="order-search" type="search" placeholder="Cliente, referência, produto ou fatura"></label>
       <label>Estado<select id="order-filter" aria-label="Filtrar encomendas por estado"><option value="active">Ativas</option><option value="all">Todas</option><option value="pending">Pendentes</option><option value="producing">Em produção</option><option value="ready">Prontas</option><option value="closed">Fechadas</option></select></label>
+      <label>Pagamento<select id="order-payment"><option value="">Todos</option><option value="outstanding">Com saldo por receber</option><option value="unpaid">Sem pagamento</option><option value="partial">Parcialmente pagas</option><option value="paid">Pagas</option></select></label>
       <label>Ordenar por<select id="order-sort"><option value="deadline">Prazo de entrega</option><option value="client">Cliente (A–Z)</option><option value="recent">Mais recentes</option></select></label>
     </div>
     <div class="metrics" id="order-totals" aria-label="Totais das encomendas filtradas" aria-live="polite" hidden>
@@ -323,7 +339,12 @@
         <label>Encomenda<input name="reference" required maxlength="180"></label>
         <label>Cliente<input name="customer" required maxlength="180"></label>
         <label>Prazo<input name="due" type="date" required></label>
-        <label>Produto<select name="sku" required></select></label>
+        <div class="sale-product">
+          <label>Pesquisar produto<input type="search" data-product-search placeholder="Nome, referência ou fornecedor"></label>
+          <div data-product-results hidden></div>
+          <label>Produto<select name="sku" required></select></label>
+          <div data-product-preview></div>
+        </div>
         <label>Quantidade<input name="quantity" type="number" min="0.01" step="0.01" max="1000000" required></label>
         <label>Instruções de trabalho<input name="notes" maxlength="1500"></label>
         <button>Guardar alteração</button>
@@ -333,5 +354,5 @@
 </div>
 
 </div>
-<script type="module" src="./sync.mjs?v=purchase-stock-1"></script>
+<script type="module" src="./sync.mjs?v=order-payments-1"></script>
 </html>
